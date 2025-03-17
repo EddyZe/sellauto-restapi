@@ -8,16 +8,18 @@ import ru.eddyz.sellautorestapi.dto.UserDto;
 import ru.eddyz.sellautorestapi.entities.User;
 
 
-@Mapper(componentModel = "spring", uses = {AccountMapper.class})
+@Mapper(componentModel = "spring", uses = {AccountMapper.class, AdMapper.class})
 public interface UserMapper {
 
     @Mappings({
-            @Mapping(source = "account", target = "account")  // Маппинг для account
+            @Mapping(source = "ads", target = "ads"),
+            @Mapping(source = "account", target = "account")
     })
     UserDto toDto(User user);
 
     @Mappings({
-            @Mapping(source = "account", target = "account")  // Маппинг для account
+            @Mapping(source = "ads", target = "ads"),
+            @Mapping(source = "account", target = "account")
     })
     User toEntity(UserDto userDto);
 }

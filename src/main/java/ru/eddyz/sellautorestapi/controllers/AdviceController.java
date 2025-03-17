@@ -4,6 +4,7 @@ package ru.eddyz.sellautorestapi.controllers;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
@@ -26,6 +27,13 @@ public class AdviceController {
 
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<?> authExceptionHandler(AuthException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ProblemDetail
+                        .forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage()));
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<?> handleUsernameNotFoundException(UsernameNotFoundException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ProblemDetail
                         .forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage()));

@@ -56,7 +56,7 @@ public class RefreshTokenService {
 
     @Scheduled(fixedDelay = 20, timeUnit = TimeUnit.MINUTES)
     public void removeRefreshTokenAfter() {
-        refreshTokenRepository.findByExpiredDateAfter(new Date())
+        refreshTokenRepository.findByExpiredDateBefore(new Date())
                 .forEach(token -> refreshTokenRepository.deleteById(token.getId()));
     }
 

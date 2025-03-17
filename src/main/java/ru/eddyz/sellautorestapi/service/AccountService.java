@@ -15,7 +15,6 @@ import ru.eddyz.sellautorestapi.enums.Role;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
 import ru.eddyz.sellautorestapi.exeptions.AuthException;
 import ru.eddyz.sellautorestapi.repositories.AccountRepository;
-import ru.eddyz.sellautorestapi.repositories.UserRepository;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -29,18 +28,12 @@ public class AccountService implements UserDetailsService {
 
 
     @Transactional
-    public Account createAccount(Account account) throws AuthException {
+    public Account createAccount(Account account) {
         if (account.getPassword() == null || account.getPassword().isBlank()) {
             throw new AccountException("Password is required", "PASSWORD_REQUIRED");
         }
 
-        if (accountRepository.findByEmail(account.getEmail()).isPresent()) {
-            throw new AccountException("Email is already", "ACCOUNT_ALREADY_EXISTS");
-        }
-
-        if (accountRepository.findByPhoneNumber(account.getPhoneNumber()).isPresent()) {
-            throw new AccountException("Phone number is already", "ACCOUNT_ALREADY_EXISTS");
-        }
+        checkEmailAndPhoneNumber(account);
         return accountRepository.save(account
                 .toBuilder()
                 .password(passwordEncoder.encode(account.getPassword()))
@@ -49,10 +42,19 @@ public class AccountService implements UserDetailsService {
                 .build());
     }
 
+    public Optional<Account> findByPhoneNumber(String phoneNumber) {
+        return accountRepository.findByPhoneNumber(phoneNumber);
+    }
+
+    public void update(Account account) {
+        accountRepository.save(account);
+    }
+
     public Optional<Account> findById(Long id) {
         return accountRepository.findById(id);
     }
 
+    @Transactional
     public Optional<Account> findByEmail(String email) {
         return accountRepository.findByEmail(email);
     }
@@ -73,5 +75,15 @@ public class AccountService implements UserDetailsService {
                 .authorities(Collections.singleton(new SimpleGrantedAuthority(account.getRole().toString())))
                 .disabled(false)
                 .build();
+    }
+
+    private void checkEmailAndPhoneNumber(Account account) {
+        if (accountRepository.findByEmail(account.getEmail()).isPresent()) {
+            throw new AccountException("Email is already", "ACCOUNT_ALREADY_EXISTS");
+        }
+
+        if (accountRepository.findByPhoneNumber(account.getPhoneNumber()).isPresent()) {
+            throw new AccountException("Phone number is already", "ACCOUNT_ALREADY_EXISTS");
+        }
     }
 }
