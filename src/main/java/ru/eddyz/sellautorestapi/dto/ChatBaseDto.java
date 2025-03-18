@@ -7,15 +7,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class EditProfileDto {
+public class ChatBaseDto {
 
-    private String firstName;
-    private String lastName;
-    private String phoneNumber;
+    private Long chatId;
+
+    private List<MessageBaseDto> messages;
 
 }

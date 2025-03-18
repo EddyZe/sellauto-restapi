@@ -7,14 +7,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-
+import java.util.List;
 
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Builder
-public class AdDto {
+public class AdProfileDto {
 
     private Long adId;
 
@@ -22,17 +22,13 @@ public class AdDto {
 
     private String description;
 
-//    private List<Price> prices;
+    private List<PriceBaseDto> prices;
 
     private Boolean isActive;
 
     private LocalDateTime createdAt;
 
-    private UserDto user;
+    private CarProfileDto car;
 
-
-//    private Car car;
-
-//    @OneToMany(mappedBy = "ad", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
-//    private List<Chat> chats;
+    private List<ChatBaseDto> chats;
 }

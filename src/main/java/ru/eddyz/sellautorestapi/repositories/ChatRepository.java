@@ -21,8 +21,7 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
     @Query(nativeQuery = true, value = "delete from user_chats where chat_id=:chatId")
     void deleteLinksChat(@Param("chatId") Long chatId);
 
-    @Modifying
-    @Query(nativeQuery = true, value = "select from user_chats where user_id=:userId")
+    @Query(nativeQuery = true, value = "select from user_chats uc join usr u on uc.user_id = u.user_id where u.user_id=:userId")
     List<Chat> findUserChats(@Param("userId") Long userId);
 
     List<Chat> findByAdAdId(Long id);

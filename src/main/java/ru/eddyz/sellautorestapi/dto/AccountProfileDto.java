@@ -2,7 +2,6 @@ package ru.eddyz.sellautorestapi.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,16 +13,13 @@ import ru.eddyz.sellautorestapi.enums.Role;
 @Data
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AccountDto {
+public class AccountProfileDto {
 
     private Long accountId;
 
     private String email;
 
     private String phoneNumber;
-
-    @JsonProperty(access =  JsonProperty.Access.WRITE_ONLY)
-    private String password;
 
     private boolean blocked;
 

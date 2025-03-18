@@ -29,7 +29,7 @@ public class Chat {
             inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"))
     private List<User> users;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "ad_id", referencedColumnName = "ad_id")
     private Ad ad;
 

@@ -57,7 +57,8 @@ public class Car {
     @JoinColumn(name = "color_id", referencedColumnName = "color_id")
     private Color color;
 
-    @OneToOne(mappedBy = "car", cascade = CascadeType.REMOVE)
+    @OneToOne
+    @JoinColumn(name = "ad_id", referencedColumnName = "ad_id")
     private Ad ad;
 
 }

@@ -7,15 +7,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
+import java.util.List;
+
 @Data
-@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class EditProfileDto {
+public class UserProfileDto {
+
+    private Long userId;
 
     private String firstName;
+
     private String lastName;
-    private String phoneNumber;
+
+    private AccountProfileDto account;
+
+    private List<AdProfileDto> ads;
 
 }

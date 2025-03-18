@@ -37,10 +37,9 @@ public class Ad {
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     private User user;
 
-    @OneToOne(cascade = CascadeType.REMOVE)
-    @JoinColumn(name = "car_id", referencedColumnName = "car_id")
+    @OneToOne(mappedBy = "ad", cascade = CascadeType.REMOVE)
     private Car car;
 
-    @OneToMany(mappedBy = "ad", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "ad", cascade = CascadeType.REMOVE)
     private List<Chat> chats;
 }

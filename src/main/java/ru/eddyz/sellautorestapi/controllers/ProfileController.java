@@ -4,25 +4,17 @@ package ru.eddyz.sellautorestapi.controllers;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.validation.BindingResult;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import ru.eddyz.sellautorestapi.dto.EditProfileDto;
-import ru.eddyz.sellautorestapi.dto.UserDto;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
 import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
-import ru.eddyz.sellautorestapi.mapper.UserMapper;
+import ru.eddyz.sellautorestapi.mapper.*;
 import ru.eddyz.sellautorestapi.service.AccountService;
 import ru.eddyz.sellautorestapi.service.UserService;
-import ru.eddyz.sellautorestapi.util.BindingResultHelper;
-
-import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/v1/profile")
@@ -35,11 +27,12 @@ public class ProfileController {
     private final UserService userService;
 
     @GetMapping
+    @Transactional
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        var acc = accountService.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new AccountNotFoundException("Not found"));
         return ResponseEntity.status(HttpStatus.OK)
-                .body(userMapper.toDto(accountService.findByEmail(userDetails.getUsername())
-                        .orElseThrow(() -> new AccountNotFoundException("Not found"))
-                        .getUser()));
+                .body(userMapper.toDto(acc.getUser()));
     }
 
     @PatchMapping

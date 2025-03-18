@@ -7,9 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.eddyz.sellautorestapi.exeptions.AccountException;
-import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
-import ru.eddyz.sellautorestapi.exeptions.AuthException;
+import ru.eddyz.sellautorestapi.exeptions.*;
 
 @RestControllerAdvice
 public class AdviceController {
@@ -37,5 +35,23 @@ public class AdviceController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ProblemDetail
                         .forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage()));
+    }
+
+    @ExceptionHandler(CarNotFoundException.class)
+    public ResponseEntity<?> handleCarNotFoundException(CarNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(CarException.class)
+    public ResponseEntity<?> handleCarException(CarException e) {
+        return ResponseEntity.badRequest()
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage()));
+    }
+
+    @ExceptionHandler(PhotoNotFoundException.class)
+    public ResponseEntity<?> handlePhotoNotFoundException(PhotoNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
     }
 }

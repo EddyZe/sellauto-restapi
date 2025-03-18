@@ -1,21 +1,19 @@
 package ru.eddyz.sellautorestapi.dto;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class EditProfileDto {
+public class UserBaseDto {
+    private Long userId;
 
     private String firstName;
-    private String lastName;
-    private String phoneNumber;
 
+    private String lastName;
 }

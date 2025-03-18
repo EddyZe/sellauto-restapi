@@ -19,7 +19,6 @@ import ru.eddyz.sellautorestapi.entities.RefreshToken;
 import ru.eddyz.sellautorestapi.enums.Role;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
 import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
-import ru.eddyz.sellautorestapi.exeptions.AuthException;
 import ru.eddyz.sellautorestapi.mapper.AccountMapper;
 import ru.eddyz.sellautorestapi.mapper.UserMapper;
 import ru.eddyz.sellautorestapi.security.JwtService;

@@ -20,6 +20,7 @@ public class Color {
     @Column(name = "color_id")
     private Integer colorId;
 
+    @Column(unique = true)
     private String title;
 
     @OneToMany(mappedBy = "color", cascade = CascadeType.REMOVE)

@@ -8,9 +8,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.eddyz.sellautorestapi.entities.User;
+import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
 import ru.eddyz.sellautorestapi.repositories.UserRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,11 @@ public class UserService {
             throw new UsernameNotFoundException("User not found");
 
         userRepository.save(user);
+    }
+
+    public User findByEmail(String email) {
+        return userRepository.findByAccountEmail(email)
+                .orElseThrow(() -> new AccountNotFoundException("User not found"));
     }
 
     public void deleteById(Long id) {

@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.eddyz.sellautorestapi.entities.Account;
 import ru.eddyz.sellautorestapi.enums.Role;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
-import ru.eddyz.sellautorestapi.exeptions.AuthException;
 import ru.eddyz.sellautorestapi.repositories.AccountRepository;
 
 import java.util.Collections;
@@ -54,7 +53,7 @@ public class AccountService implements UserDetailsService {
         return accountRepository.findById(id);
     }
 
-    @Transactional
+
     public Optional<Account> findByEmail(String email) {
         return accountRepository.findByEmail(email);
     }
