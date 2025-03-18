@@ -38,6 +38,7 @@ public class Ad {
     private User user;
 
     @OneToOne(mappedBy = "ad", cascade = CascadeType.REMOVE)
+    @PrimaryKeyJoinColumn
     private Car car;
 
     @OneToMany(mappedBy = "ad", cascade = CascadeType.REMOVE)

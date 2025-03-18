@@ -2,17 +2,12 @@ package ru.eddyz.sellautorestapi.service;
 
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.eddyz.sellautorestapi.entities.Car;
-import ru.eddyz.sellautorestapi.entities.Chat;
-import ru.eddyz.sellautorestapi.exeptions.CarNotFoundException;
 import ru.eddyz.sellautorestapi.repositories.CarRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +15,7 @@ public class CarService {
 
     private final CarRepository carRepository;
 
-    public List<Car> findByVin(String vin){
+    public List<Car> findByVin(String vin) {
         return carRepository.findByVin(vin);
     }
 
@@ -38,10 +33,14 @@ public class CarService {
     }
 
     public List<Car> findByBrandTitleAndModelTitleAndColorTitle(String brandTitle, String modelTitle, String colorTitle) {
-        return carRepository.findByBrandTitleAndModelTitleAndColorTitle(brandTitle, modelTitle, colorTitle);
+        return carRepository.findByBrandTitleAndModelTitleAndColorTitle(brandTitle, modelTitle, colorTitle, Sort.by("createdAt"));
     }
 
     public List<Car> findAll() {
         return carRepository.findAll();
+    }
+
+    public Car save(Car car) {
+        return carRepository.save(car);
     }
 }

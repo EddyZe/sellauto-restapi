@@ -1,6 +1,9 @@
 package ru.eddyz.sellautorestapi.controllers;
 
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -53,5 +56,43 @@ public class AdviceController {
     public ResponseEntity<?> handlePhotoNotFoundException(PhotoNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(ColorNotFoundException.class)
+    public ResponseEntity<?> handleColorNotFoundException(ColorNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(BrandNotFoundException.class)
+    public ResponseEntity<?> handleBrandNotFoundException(BrandNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(ServerException.class)
+    public ResponseEntity<?> handleServerException(ServerException e) {
+        return ResponseEntity.status(e.getStatus())
+                .body(ProblemDetail.forStatusAndDetail(e.getStatus(), e.getMessage()));
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<?> handleEntityNotFoundException(EntityNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<?> handleExpiredJwtException(ExpiredJwtException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage()));
+    }
+
+    @ExceptionHandler({InvalidFormatException.class})
+    public ResponseEntity<?> handleInvalidFormatException(InvalidFormatException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(
+                        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage())
+                );
     }
 }

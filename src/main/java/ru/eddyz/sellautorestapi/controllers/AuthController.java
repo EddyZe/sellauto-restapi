@@ -19,7 +19,6 @@ import ru.eddyz.sellautorestapi.entities.RefreshToken;
 import ru.eddyz.sellautorestapi.enums.Role;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
 import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
-import ru.eddyz.sellautorestapi.mapper.AccountMapper;
 import ru.eddyz.sellautorestapi.mapper.UserMapper;
 import ru.eddyz.sellautorestapi.security.JwtService;
 import ru.eddyz.sellautorestapi.service.AccountService;
@@ -39,7 +38,6 @@ public class AuthController {
 
     private final AccountService accountService;
     private final UserService userService;
-    private final AccountMapper accountMapper;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;

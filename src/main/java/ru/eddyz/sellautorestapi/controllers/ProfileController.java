@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.eddyz.sellautorestapi.dto.EditProfileDto;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
 import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
-import ru.eddyz.sellautorestapi.mapper.*;
+import ru.eddyz.sellautorestapi.mapper.UserMapper;
 import ru.eddyz.sellautorestapi.service.AccountService;
 import ru.eddyz.sellautorestapi.service.UserService;
 

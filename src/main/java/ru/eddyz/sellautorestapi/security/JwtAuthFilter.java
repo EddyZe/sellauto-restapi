@@ -1,5 +1,6 @@
 package ru.eddyz.sellautorestapi.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -57,21 +58,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
-        email = jwtService.extractEmail(jwt);
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = accountService.loadUserByUsername(email);
-            if (jwtService.validateToken(jwt, userDetails)) {
-                var authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
+        try {
+            email = jwtService.extractEmail(jwt);
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = accountService.loadUserByUsername(email);
+                if (jwtService.validateToken(jwt, userDetails)) {
+                    var authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+
+            filterChain.doFilter(request, response);
+        } catch (ExpiredJwtException e) {
+            if (response != null) {
+                response.sendError(401, "Token is expired");
             }
         }
-
-        filterChain.doFilter(request, response);
     }
 }

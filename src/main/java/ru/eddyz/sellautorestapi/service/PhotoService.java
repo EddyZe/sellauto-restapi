@@ -7,8 +7,6 @@ import ru.eddyz.sellautorestapi.entities.Photo;
 import ru.eddyz.sellautorestapi.exeptions.PhotoNotFoundException;
 import ru.eddyz.sellautorestapi.repositories.PhotoRepository;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class PhotoService {
@@ -18,5 +16,9 @@ public class PhotoService {
     public Photo findById(Long photoId) {
         return photoRepository.findById(photoId)
                 .orElseThrow(() -> new PhotoNotFoundException("Photo with id: " + photoId + " not found!"));
+    }
+
+    public Photo save(Photo photo) {
+        return photoRepository.save(photo);
     }
 }

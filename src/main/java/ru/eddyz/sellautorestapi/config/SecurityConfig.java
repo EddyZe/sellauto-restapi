@@ -35,7 +35,7 @@ public class SecurityConfig {
                             "/styles/**",
                             "/photos/**").permitAll();
                     authManager.requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").authenticated();
-                    authManager.requestMatchers(HttpMethod.POST, "/api/v1/auth/**", "/api/v1/ads/filter").permitAll();
+                    authManager.requestMatchers(HttpMethod.POST, "/api/v1/auth/**", "/api/v1/ads/filter", "/errors").permitAll();
                     authManager.requestMatchers(HttpMethod.GET, "/api/v1/admin/**").hasAuthority("ROLE_ADMIN");
                     authManager.requestMatchers(HttpMethod.POST, "/api/v1/admin/**").hasAuthority("ROLE_ADMIN");
 
@@ -44,11 +44,9 @@ public class SecurityConfig {
                 })
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(
-                        jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 }
 
