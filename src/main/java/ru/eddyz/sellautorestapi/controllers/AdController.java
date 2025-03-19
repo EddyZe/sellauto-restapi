@@ -1,9 +1,10 @@
 package ru.eddyz.sellautorestapi.controllers;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -15,16 +16,20 @@ import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.eddyz.sellautorestapi.dto.CreateNewAdDto;
+import ru.eddyz.sellautorestapi.dto.EditAdDto;
+import ru.eddyz.sellautorestapi.entities.Car;
+import ru.eddyz.sellautorestapi.entities.Price;
+import ru.eddyz.sellautorestapi.enums.Role;
+import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
+import ru.eddyz.sellautorestapi.exeptions.AdException;
 import ru.eddyz.sellautorestapi.mapper.AdDetailsMapper;
-import ru.eddyz.sellautorestapi.service.AdService;
-import ru.eddyz.sellautorestapi.service.CarService;
-import ru.eddyz.sellautorestapi.service.PhotoService;
-import ru.eddyz.sellautorestapi.service.UserService;
+import ru.eddyz.sellautorestapi.service.*;
 import ru.eddyz.sellautorestapi.util.BindingResultHelper;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -40,6 +45,7 @@ public class AdController {
     private final UserService userService;
     private final ObjectMapper objectMapper;
     private final Validator validator;
+    private final AccountService accountService;
 
 
     private final AdDetailsMapper adDetailsMapper;
@@ -56,40 +62,13 @@ public class AdController {
     @GetMapping
     public ResponseEntity<?> getAds(@RequestParam(name = "color", required = false) String color,
                                     @RequestParam(name = "brand", required = false) String brand,
-                                    @RequestParam(name = "model", required = false) String model) {
-
-        if (color != null && brand != null && model != null) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(
-                            carService.findByBrandTitleAndModelTitleAndColorTitle(
-                                            brand, model, color
-                                    ).stream()
-                                    .map(car -> adDetailsMapper.toDto(car.getAd()))
-                                    .toList()
-                    );
-        }
-
+                                    @RequestParam(name = "model", required = false) String model,
+                                    @RequestParam(name = "year-from", required = false) String yearFrom,
+                                    @RequestParam(name = "year-to", required = false) String yearTo) {
         var ads = carService.findAll()
                 .stream()
-                .filter(car -> {
-                    System.out.println(car.getBrand().getTitle());
-                    if (car.getAd() == null)
-                        return false;
-
-                    if (brand != null && !car.getBrand().getTitle().equalsIgnoreCase(brand)) {
-                        return false;
-                    }
-
-                    if (model != null && !car.getModel().getTitle().equalsIgnoreCase(model)) {
-                        return false;
-                    }
-
-                    if (color != null && !car.getColor().getTitle().equalsIgnoreCase(color)) {
-                        return false;
-                    }
-
-                    return true;
-                }).map(car -> adDetailsMapper.toDto(car.getAd()))
+                .filter(car -> matcherFilter(color, brand, model, yearFrom, yearTo, car))
+                .map(car -> adDetailsMapper.toDto(car.getAd()))
                 .toList();
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -117,7 +96,6 @@ public class AdController {
         }
     }
 
-    @SneakyThrows
     @PostMapping(value = "/create", consumes = {
             MediaType.MULTIPART_FORM_DATA_VALUE,
     })
@@ -126,7 +104,7 @@ public class AdController {
                                       @RequestPart("photos") List<MultipartFile> photos,
                                       @AuthenticationPrincipal UserDetails userDetails) {
 
-        var ad = objectMapper.readValue(add, CreateNewAdDto.class);
+        CreateNewAdDto ad = convertJsonToAdDto(add);
         try {
             validator.validate(ad, bindingResult);
         } catch (Exception e) {
@@ -148,5 +126,95 @@ public class AdController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(adDetailsMapper.toDto(adService.create(ad, photos, user)));
     }
+
+    @PatchMapping("/{adId}")
+    public ResponseEntity<?> updateAd(@PathVariable Long adId,
+                                      @RequestBody @Valid EditAdDto adDto,
+                                      BindingResult bindingResult, @AuthenticationPrincipal UserDetails userDetails) {
+
+        if (bindingResult.hasErrors()) {
+            var msg = BindingResultHelper.buildFieldErrorMessage(bindingResult);
+            return ResponseEntity.badRequest()
+                    .body(ProblemDetail.forStatusAndDetail(
+                            HttpStatus.BAD_REQUEST, msg
+                    ));
+        }
+
+        var ad = adService.findById(adId);
+        var acc = accountService.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new AccountNotFoundException("Account not found!"));
+
+        if (!ad.getUser().getAccount().getEmail().equals(userDetails.getUsername()) || acc.getRole() != Role.ROLE_ADMIN) {
+            throw new AdException("Insufficient rights to do this operation");
+        }
+
+        ad.getPrices().add(Price.builder()
+                .ad(ad)
+                .price(adDto.getPrice())
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        ad.setTitle(adDto.getTitle());
+        ad.setDescription(adDto.getDescription());
+        adService.save(ad);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @DeleteMapping("/{adId}")
+    public ResponseEntity<?> deleteAd(@PathVariable Long adId,
+                                      @AuthenticationPrincipal UserDetails userDetails) {
+        var ad = adService.findById(adId);
+        var acc = accountService.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new AccountNotFoundException("Account not found!"));
+
+        if (!ad.getUser().getAccount().getEmail().equals(userDetails.getUsername()) || acc.getRole() != Role.ROLE_ADMIN) {
+            throw new AdException("Insufficient rights to do this operation");
+        }
+
+        adService.deleteById(adId);
+        return ResponseEntity.ok().build();
+    }
+
+    private CreateNewAdDto convertJsonToAdDto(String add) {
+
+        try {
+            return objectMapper.readValue(add, CreateNewAdDto.class);
+        } catch (JsonProcessingException e) {
+            throw new AdException("invalid JSON");
+        }
+    }
+
+    private boolean matcherFilter(String color, String brand, String model, String yearFrom, String yearTo, Car car) {
+        if (car.getAd() == null)
+            return false;
+
+        if (brand != null && !car.getBrand().getTitle().equalsIgnoreCase(brand)) {
+            return false;
+        }
+
+        if (model != null && !car.getModel().getTitle().equalsIgnoreCase(model)) {
+            return false;
+        }
+
+        if (color != null && !car.getColor().getTitle().equalsIgnoreCase(color)) {
+            return false;
+        }
+
+        return !isValidYear(yearFrom, yearTo, car);
+    }
+
+    private boolean isValidYear(String yearFrom, String yearTo, Car car) {
+        try {
+            if (yearFrom != null && Integer.parseInt(yearFrom) < car.getYear())
+                return true;
+
+            if (yearTo != null && Integer.parseInt(yearTo) > car.getYear())
+                return true;
+        } catch (NumberFormatException e) {
+            throw new AdException("Invalid year");
+        }
+        return false;
+    }
+
 
 }

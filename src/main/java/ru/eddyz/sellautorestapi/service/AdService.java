@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import ru.eddyz.sellautorestapi.dto.CreateNewAdDto;
+import ru.eddyz.sellautorestapi.dto.EditAdDto;
 import ru.eddyz.sellautorestapi.entities.*;
+import ru.eddyz.sellautorestapi.exeptions.AdNotFountException;
 import ru.eddyz.sellautorestapi.exeptions.ServerException;
 import ru.eddyz.sellautorestapi.repositories.AdRepository;
 
@@ -46,6 +48,17 @@ public class AdService {
 
     public List<Ad> findByAdsByUserEmail(String email) {
         return adRepository.findAdUserByEmail(email);
+    }
+
+
+    @Transactional
+    public Ad findById(Long adId) {
+        return adRepository.findById(adId)
+                .orElseThrow(() -> new AdNotFountException("Ad not  found"));
+    }
+
+    public void deleteById(Long adId) {
+        adRepository.deleteById(adId);
     }
 
     public Ad save(Ad ad) {
