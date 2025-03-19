@@ -5,6 +5,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.eddyz.sellautorestapi.entities.Model;
+import ru.eddyz.sellautorestapi.exeptions.ModelException;
 import ru.eddyz.sellautorestapi.repositories.ModelRepository;
 
 @Service
@@ -17,4 +18,18 @@ public class ModelService {
         return modelRepository.findByTitleAndBrandTitle(modelTitle, brandTitle)
                 .orElseThrow(() -> new EntityNotFoundException("Model not found"));
     }
+
+    public Model save(Model model) {
+        if (modelRepository.findByTitleAndBrandTitle(model.getTitle(), model.getBrand().getTitle()).isPresent()) {
+            throw new ModelException("Model already exists");
+        }
+
+        return modelRepository.save(model);
+    }
+
+    public void deleteByid(Integer modelId) {
+        modelRepository.findById(modelId)
+                .ifPresent(entity -> modelRepository.deleteById(modelId));
+    }
+
 }

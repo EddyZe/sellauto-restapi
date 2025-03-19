@@ -64,10 +64,28 @@ public class AdviceController {
                 .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
     }
 
+    @ExceptionHandler(ColorException.class)
+    public ResponseEntity<?> handleColorException(ColorException e) {
+        return ResponseEntity.badRequest()
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage()));
+    }
+
     @ExceptionHandler(BrandNotFoundException.class)
     public ResponseEntity<?> handleBrandNotFoundException(BrandNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(BrandException.class)
+    public ResponseEntity<?> handleBrandException(BrandException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage()));
+    }
+
+    @ExceptionHandler(ModelException.class)
+    public ResponseEntity<?> handleModelException(ModelException e) {
+        return ResponseEntity.badRequest()
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage()));
     }
 
     @ExceptionHandler(ServerException.class)

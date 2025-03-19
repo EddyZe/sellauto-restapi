@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -57,6 +58,14 @@ public class AdController {
                 .map(adDetailsMapper::toDto);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ads);
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getAdUser(@PathVariable("userId") Long userId) {
+        var user = userService.findById(userId);
+        return ResponseEntity.ok(
+                adService.findByAdsByUserEmail(user.getAccount().getEmail())
+        );
     }
 
     @GetMapping

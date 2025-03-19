@@ -13,6 +13,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import ru.eddyz.sellautorestapi.security.JwtAuthFilter;
+import ru.eddyz.sellautorestapi.service.AccountService;
+import ru.eddyz.sellautorestapi.service.RefreshTokenService;
 
 @Configuration
 @EnableWebSecurity
@@ -22,6 +24,8 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+    private final AccountService accountService;
+    private final RefreshTokenService refreshTokenService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
@@ -44,6 +48,13 @@ public class SecurityConfig {
                 })
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
+                .logout(logout -> logout.addLogoutHandler((request, response, authentication) ->
+                        accountService.findByEmail(authentication.getName())
+                        .ifPresent(acc -> acc.getRefreshToken()
+                                .forEach(refreshToken -> {
+                                    refreshToken.setBlocked(true);
+                                    refreshTokenService.save(refreshToken);
+                                }))))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
