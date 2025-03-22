@@ -12,7 +12,6 @@ import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
 import ru.eddyz.sellautorestapi.repositories.UserRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +33,8 @@ public class UserService {
         userRepository.save(user);
     }
 
+
+    @Transactional
     public User findByEmail(String email) {
         return userRepository.findByAccountEmail(email)
                 .orElseThrow(() -> new AccountNotFoundException("User not found"));

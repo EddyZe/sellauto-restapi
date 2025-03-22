@@ -40,6 +40,24 @@ public class AdviceController {
                         .forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage()));
     }
 
+    @ExceptionHandler(ModelNotFoundException.class)
+    public ResponseEntity<?> handleModelNotFoundException(ModelNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(ChatNotFoundException.class)
+    public ResponseEntity<?> handleChatNotFoundException(ChatNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage()));
+    }
+
+    @ExceptionHandler(ChatException.class)
+    public ResponseEntity<?> handleChatException(ChatException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage()));
+    }
+
     @ExceptionHandler(CarNotFoundException.class)
     public ResponseEntity<?> handleCarNotFoundException(CarNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

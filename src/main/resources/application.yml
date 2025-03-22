@@ -29,7 +29,15 @@ logging:
   level:
     org:
       springframework:
-        security: DEBUG
+        security: TRACE
+        messaging: debug
+    ru:
+      eddyz:
+        sellautorestapi:
+          config:
+            JwtWebSocketInterceptor: debug
+    web: debug
+    root: debug
 jwt:
   secret: nMwHOhTGsd7R6kCWcrfNC4FC/vguVFd6gI4lScbapVU=
   issuer: sellauto

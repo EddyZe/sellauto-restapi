@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Client</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.0/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<div id="messages"></div>
+<script>
+    const socket = new SockJS('/ws/chat');
+    const stompClient = Stomp.over(socket);
+    const token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlZDJAbWFpbC5jb20iLCJpYXQiOjE3NDI1ODUxNDUsImV4cCI6MTc0NTE3NzE0NCwiaXNzIjoic2VsbGF1dG8ifQ.64wc95EZICJK0YH1wtpwz8G9GTzJzpzo83-nrc3aueY'
+
+
+    stompClient.connect(
+        {
+            'Authorization': 'Bearer ' + token,
+            'heart-beat': '10000,10000'
+        },
+        function (frame) {
+            stompClient.subscribe('/topic/1/messages', function (message) {
+                console.log(message)
+                const div = document.createElement('div');
+                div.innerHTML = message.body;
+                document.getElementById('messages').appendChild(div);
+            });
+        });
+
+    // function sendMessage() {
+    //     stompClient.send("/app/chat",
+    //         {
+    //             'Authorization': 'Bearer ' + token,
+    //         },
+    //         "Hello from WebSocket!");
+    // }
+</script>
+</body>
+</html>

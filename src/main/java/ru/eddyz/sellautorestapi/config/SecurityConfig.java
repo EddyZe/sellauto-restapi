@@ -1,26 +1,32 @@
 package ru.eddyz.sellautorestapi.config;
 
-
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import ru.eddyz.sellautorestapi.security.JwtAuthFilter;
 import ru.eddyz.sellautorestapi.service.AccountService;
 import ru.eddyz.sellautorestapi.service.RefreshTokenService;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
-
 
     private final JwtAuthFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
@@ -28,36 +34,76 @@ public class SecurityConfig {
     private final RefreshTokenService refreshTokenService;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authManager -> {
-                    authManager.requestMatchers(HttpMethod.OPTIONS).permitAll();
-                    authManager.requestMatchers(HttpMethod.GET, "api/v1/ads/**", "/api/v1/auth/**",
-                            "/error", "api/v1/models/**",
-                            "/styles/**",
-                            "/photos/**").permitAll();
-                    authManager.requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").authenticated();
-                    authManager.requestMatchers(HttpMethod.POST, "/api/v1/auth/**", "/api/v1/ads/filter", "/errors").permitAll();
-                    authManager.requestMatchers(HttpMethod.GET, "/api/v1/admin/**").hasAuthority("ROLE_ADMIN");
-                    authManager.requestMatchers(HttpMethod.POST, "/api/v1/admin/**").hasAuthority("ROLE_ADMIN");
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/topic/**",
+                                "/app/**",
+                                "/ws/**"
+                        ).permitAll()
 
-                    authManager.anyRequest()
-                            .authenticated();
-                })
-                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/app.js",
+                                "/styles/**",
+                                "/static/**",
+                                "/photos/**",
+                                "/error"
+                        ).permitAll()
+
+
+                        .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/ads/**",
+                                "/api/v1/auth/**",
+                                "/api/v1/models/**"
+                        ).permitAll()
+
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/auth/**",
+                                "/api/v1/ads/filter"
+                        ).permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").authenticated()
+
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // Используем hasRole вместо hasAuthority
+
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .authenticationProvider(authenticationProvider)
-                .logout(logout -> logout.addLogoutHandler((request, response, authentication) ->
-                        accountService.findByEmail(authentication.getName())
-                        .ifPresent(acc -> acc.getRefreshToken()
-                                .forEach(refreshToken -> {
-                                    refreshToken.setBlocked(true);
-                                    refreshTokenService.save(refreshToken);
-                                }))))
+                .logout(logout -> logout
+                        .addLogoutHandler((request, response, authentication) ->
+                                accountService.findByEmail(authentication.getName())
+                                        .ifPresent(acc -> acc.getRefreshToken()
+                                                .forEach(refreshToken -> {
+                                                    refreshToken.setBlocked(true);
+                                                    refreshTokenService.save(refreshToken);
+                                                })
+                                        )
+                        )
+                )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
-}
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Stomp-Action")); // Добавьте Stomp-Action
+        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowCredentials(true);
 
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+}

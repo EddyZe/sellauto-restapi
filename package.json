@@ -1,0 +1,17 @@
+{
+  "name": "sellauto-restapi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EddyZe/sellauto-restapi.git"
+  },
+  "private": true,
+  "devDependencies": {
+    "@stomp/stompjs": "^7.0.1"
+  }
+}

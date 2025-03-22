@@ -8,6 +8,8 @@ import ru.eddyz.sellautorestapi.exeptions.BrandException;
 import ru.eddyz.sellautorestapi.exeptions.BrandNotFoundException;
 import ru.eddyz.sellautorestapi.repositories.BrandRepository;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class BrandService {
@@ -30,5 +32,14 @@ public class BrandService {
     public void deleteById(Integer brandId) {
         brandRepository.findById(brandId)
                 .ifPresent(brand -> brandRepository.deleteById(brandId));
+    }
+
+    public List<Brand> findAll() {
+        return brandRepository.findAll();
+    }
+
+    public Brand findById(Integer brandId) {
+        return brandRepository.findById(brandId)
+                .orElseThrow(() -> new BrandNotFoundException("Brand not found"));
     }
 }
