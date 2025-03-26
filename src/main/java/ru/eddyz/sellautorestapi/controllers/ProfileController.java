@@ -42,8 +42,10 @@ public class ProfileController {
         var acc = accountService.findByEmail(userDetails.getUsername()).
                 orElseThrow(() -> new AccountNotFoundException("Not found"));
         var user = acc.getUser();
+        var accOp = accountService.findByPhoneNumber(editProfileDto.getPhoneNumber());
 
-        if (editProfileDto.getPhoneNumber() != null && accountService.findByPhoneNumber(editProfileDto.getPhoneNumber()).isPresent()) {
+        if (editProfileDto.getPhoneNumber() != null && accOp.isPresent() &&
+            !user.getAccount().getPhoneNumber().equals(editProfileDto.getPhoneNumber())) {
             throw new AccountException("Phone number already exist", "PHONE_NUMBER_IS_EXIST");
         }
 

@@ -23,7 +23,13 @@ public class Color {
     @Column(unique = true)
     private String title;
 
-    @OneToMany(mappedBy = "color", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "color")
     private List<Car> car;
+
+    @PreRemove
+    private void preRemove() {
+        this.car.forEach(car -> car.setColor(null));
+        this.car.clear();
+    }
 
 }

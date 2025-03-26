@@ -43,22 +43,23 @@ public class Car {
     private DriveMode drive;
 
     @ManyToOne
-    @JoinColumn(name = "brand_id", referencedColumnName = "brand_id")
+    @JoinColumn(name = "brand_id", referencedColumnName = "brand_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Brand brand;
 
     @ManyToOne
-    @JoinColumn(name = "model_id", referencedColumnName = "model_id")
+    @JoinColumn(name = "model_id", referencedColumnName = "model_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Model model;
 
     @OneToMany(mappedBy = "car", cascade = CascadeType.REMOVE)
     private List<Photo> photos;
 
-    @ManyToOne
-    @JoinColumn(name = "color_id", referencedColumnName = "color_id")
+    @ManyToOne()
+    @JoinColumn(name = "color_id", referencedColumnName = "color_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Color color;
 
     @OneToOne
     @JoinColumn(name = "ad_id", referencedColumnName = "ad_id")
     private Ad ad;
+
 
 }

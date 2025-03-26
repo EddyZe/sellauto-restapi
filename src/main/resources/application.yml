@@ -11,6 +11,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show.sql: true
+        format_sql: true
     hibernate:
       ddl-auto: update
   servlet:
@@ -29,15 +30,15 @@ logging:
   level:
     org:
       springframework:
-        security: TRACE
-        messaging: debug
+        security: info
+        messaging: info
     ru:
       eddyz:
         sellautorestapi:
           config:
-            JwtWebSocketInterceptor: debug
-    web: debug
-    root: debug
+            JwtWebSocketInterceptor: info
+    web: info
+    root: info
 jwt:
   secret: nMwHOhTGsd7R6kCWcrfNC4FC/vguVFd6gI4lScbapVU=
   issuer: sellauto

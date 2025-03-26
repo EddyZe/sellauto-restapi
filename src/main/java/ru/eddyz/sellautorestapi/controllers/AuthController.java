@@ -72,7 +72,8 @@ public class AuthController {
     }
 
     @PostMapping(value = "/login")
-    public ResponseEntity<?> login(@RequestBody @Valid AuthLoginDto authLoginDto, BindingResult bindingResult) {
+    public ResponseEntity<?> login(@RequestBody @Valid AuthLoginDto authLoginDto,
+                                   BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
             var msg = BindingResultHelper.buildFieldErrorMessage(bindingResult);
@@ -110,8 +111,11 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshTokens(@AuthenticationPrincipal UserDetails user, @RequestHeader("Authorization") String refreshTokenHeader) {
+    public ResponseEntity<?> refreshTokens(@RequestHeader("Authorization") String refreshTokenHeader) {
         var refreshToken = refreshTokenHeader.substring("Bearer ".length());
+        var email = jwtService.extractEmail(refreshToken);
+
+        var user = accountService.loadUserByUsername(email);
 
         if (!jwtService.validateToken(refreshToken, user)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

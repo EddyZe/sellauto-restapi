@@ -1,23 +1,17 @@
 package ru.eddyz.sellautorestapi.dto;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-
-
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
-public class PriceBaseDto {
-    private Integer priceId;
-
-    private Double price;
-
-    private LocalDateTime createdAt;
+public class ColorsDto {
+    List<ColorBaseDto> colors;
 }

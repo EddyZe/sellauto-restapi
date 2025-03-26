@@ -84,6 +84,12 @@ public class AdController {
                 .body(ads);
     }
 
+    @GetMapping("{adId}")
+    public ResponseEntity<?> getAd(@PathVariable("adId") Long adId) {
+        return ResponseEntity.ok(adDetailsMapper
+                .toDto(adService.findById(adId)));
+    }
+
     @GetMapping("/getPhoto/{photoId}")
     public ResponseEntity<?> getPhoto(@PathVariable("photoId") Long photoId) {
         var photo = photoService.findById(photoId);

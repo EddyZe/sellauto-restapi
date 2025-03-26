@@ -9,11 +9,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.eddyz.sellautorestapi.dto.BrandBaseDto;
 import ru.eddyz.sellautorestapi.dto.ColorBaseDto;
+import ru.eddyz.sellautorestapi.dto.ColorsDto;
 import ru.eddyz.sellautorestapi.dto.ModelBaseDto;
 import ru.eddyz.sellautorestapi.entities.Brand;
 import ru.eddyz.sellautorestapi.entities.Color;
 import ru.eddyz.sellautorestapi.entities.Model;
 import ru.eddyz.sellautorestapi.exeptions.AdNotFountException;
+import ru.eddyz.sellautorestapi.mapper.ColorBaseMapper;
 import ru.eddyz.sellautorestapi.service.*;
 
 import java.io.IOException;
@@ -32,6 +34,7 @@ public class AdminController {
     private final BrandService brandService;
     private final ModelService modelService;
     private final CsvDataService csvDataService;
+    private final ColorBaseMapper colorBaseMapper;
 
 
     @PostMapping("/ban/{accountId}")
@@ -57,6 +60,17 @@ public class AdminController {
                 .build();
 
         return ResponseEntity.ok(colorService.save(color));
+    }
+
+    @GetMapping("/colors")
+    public ResponseEntity<?> getColors() {
+        return ResponseEntity.ok(ColorsDto
+                .builder()
+                .colors(colorService.findAll()
+                        .stream()
+                        .map(colorBaseMapper::toDto)
+                        .toList())
+                .build());
     }
 
     @DeleteMapping("/colors/{colorId}")

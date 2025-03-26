@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import ru.eddyz.sellautorestapi.exeptions.AuthException;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -65,6 +66,9 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String jwt) {
+        if (jwt == null ||  jwt.isEmpty()) {
+            throw new AuthException("Invalid token!",  "INVALID_TOKEN");
+        }
         return Jwts.parser()
                 .verifyWith(generateSecretKey())
                 .build()
