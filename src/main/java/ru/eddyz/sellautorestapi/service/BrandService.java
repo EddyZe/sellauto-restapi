@@ -3,6 +3,7 @@ package ru.eddyz.sellautorestapi.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.eddyz.sellautorestapi.entities.Brand;
 import ru.eddyz.sellautorestapi.exeptions.BrandException;
 import ru.eddyz.sellautorestapi.exeptions.BrandNotFoundException;
@@ -34,6 +35,7 @@ public class BrandService {
                 .ifPresent(brand -> brandRepository.deleteById(brandId));
     }
 
+    @Transactional
     public List<Brand> findAll() {
         return brandRepository.findAll();
     }

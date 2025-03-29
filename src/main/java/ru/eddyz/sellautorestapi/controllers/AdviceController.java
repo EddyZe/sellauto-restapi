@@ -26,6 +26,12 @@ public class AdviceController {
                 .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage()));
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<?> handleUnauthorizedException(UnauthorizedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage()));
+    }
+
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<?> authExceptionHandler(AuthException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

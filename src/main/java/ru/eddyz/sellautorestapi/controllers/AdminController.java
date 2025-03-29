@@ -7,15 +7,15 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ru.eddyz.sellautorestapi.dto.BrandBaseDto;
-import ru.eddyz.sellautorestapi.dto.ColorBaseDto;
-import ru.eddyz.sellautorestapi.dto.ColorsDto;
-import ru.eddyz.sellautorestapi.dto.ModelBaseDto;
+import ru.eddyz.sellautorestapi.dto.*;
 import ru.eddyz.sellautorestapi.entities.Brand;
 import ru.eddyz.sellautorestapi.entities.Color;
 import ru.eddyz.sellautorestapi.entities.Model;
 import ru.eddyz.sellautorestapi.exeptions.AdNotFountException;
+import ru.eddyz.sellautorestapi.mapper.BrandBaseMapper;
 import ru.eddyz.sellautorestapi.mapper.ColorBaseMapper;
+import ru.eddyz.sellautorestapi.mapper.ModelsBaseMapper;
+import ru.eddyz.sellautorestapi.mapper.UserMapper;
 import ru.eddyz.sellautorestapi.service.*;
 
 import java.io.IOException;
@@ -35,6 +35,10 @@ public class AdminController {
     private final ModelService modelService;
     private final CsvDataService csvDataService;
     private final ColorBaseMapper colorBaseMapper;
+    private final BrandBaseMapper brandBaseMapper;
+    private final ModelsBaseMapper modelsBaseMapper;
+    private final UserMapper userMapper;
+    private final UserService userService;
 
 
     @PostMapping("/ban/{accountId}")
@@ -51,6 +55,32 @@ public class AdminController {
 
         return ResponseEntity.ok()
                 .build();
+    }
+
+    @PostMapping("/unban/{accountId}")
+    public ResponseEntity<?> unBan(@PathVariable("accountId") Long AccountId) {
+        var account = accountService.findById(AccountId)
+                .orElseThrow(() -> new AdNotFountException("Account not found"));
+
+        account.setBlocked(false);
+        accountService.update(account);
+        account.getRefreshToken().forEach(refreshToken -> {
+            refreshToken.setBlocked(false);
+            refreshTokenService.update(refreshToken);
+        });
+
+        return ResponseEntity.ok()
+                .build();
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<?> getUsers() {
+        return ResponseEntity.ok(
+                userService.findAll()
+                        .stream()
+                        .map(userMapper::toDto)
+                        .toList()
+        );
     }
 
     @PostMapping("/colors")
@@ -89,6 +119,26 @@ public class AdminController {
                 .body(brandService.save(brand));
     }
 
+    @GetMapping("/brands")
+    public ResponseEntity<?> getBrands() {
+        return ResponseEntity.ok(
+                BrandsDto.builder()
+                        .brands(brandService.findAll()
+                                .stream()
+                                .map(brandBaseMapper::toDetailsDto)
+                                .toList())
+                        .build());
+    }
+
+    @GetMapping("/brands/{brandId}")
+    public ResponseEntity<?> getBrand(@PathVariable("brandId") Integer brandId) {
+        return ResponseEntity.ok(
+                brandBaseMapper.toDetailsDto(
+                        brandService.findById(brandId)
+                )
+        );
+    }
+
     @DeleteMapping("/brands/{brandId}")
     public ResponseEntity<?> deleteBrand(@PathVariable Integer brandId) {
         brandService.deleteById(brandId);
@@ -111,6 +161,26 @@ public class AdminController {
     public ResponseEntity<?> deleteModel(@PathVariable Integer modelId) {
         modelService.deleteByid(modelId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/models/{modelId}")
+    public ResponseEntity<?> getModel(@PathVariable Integer modelId) {
+        return ResponseEntity.ok(
+                modelsBaseMapper.toDto(modelService.findById(modelId))
+        );
+    }
+
+    @GetMapping("/brand/{brandTitle}/models")
+    public ResponseEntity<?> getModels(@PathVariable String brandTitle) {
+        return ResponseEntity.ok(
+                ModelsDto.builder()
+                        .models(brandService.findByTitle(brandTitle)
+                                .getModel()
+                                .stream()
+                                .map(modelsBaseMapper::toDto)
+                                .toList())
+                        .build()
+        );
     }
 
     @PostMapping(value = "/backup/upload", consumes = {
@@ -139,6 +209,7 @@ public class AdminController {
     }
 
 
+    @CrossOrigin("*")
     @GetMapping("/backup/download")
     public ResponseEntity<?> downloadBackup() {
         var backup = csvDataService.exportToCsv();
@@ -164,4 +235,5 @@ public class AdminController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
 }

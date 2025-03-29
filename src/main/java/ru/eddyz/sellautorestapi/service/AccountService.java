@@ -16,6 +16,7 @@ import ru.eddyz.sellautorestapi.exeptions.AccountException;
 import ru.eddyz.sellautorestapi.repositories.AccountRepository;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -43,6 +44,10 @@ public class AccountService implements UserDetailsService {
 
     public Optional<Account> findByPhoneNumber(String phoneNumber) {
         return accountRepository.findByPhoneNumber(phoneNumber);
+    }
+
+    public List<Account> findAll() {
+        return accountRepository.findAll();
     }
 
     public void update(Account account) {

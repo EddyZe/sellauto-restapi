@@ -7,9 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import ru.eddyz.sellautorestapi.dto.EditProfileDto;
+import ru.eddyz.sellautorestapi.dto.ProfilesDto;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
 import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
 import ru.eddyz.sellautorestapi.mapper.UserMapper;
@@ -17,7 +17,7 @@ import ru.eddyz.sellautorestapi.service.AccountService;
 import ru.eddyz.sellautorestapi.service.UserService;
 
 @RestController
-@RequestMapping("/api/v1/profile")
+@RequestMapping("/api/v1/profiles")
 @RequiredArgsConstructor
 public class ProfileController {
 
@@ -26,13 +26,30 @@ public class ProfileController {
     private final UserMapper userMapper;
     private final UserService userService;
 
-    @GetMapping
-    @Transactional
+    @GetMapping("/my")
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
         var acc = accountService.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new AccountNotFoundException("Not found"));
         return ResponseEntity.status(HttpStatus.OK)
                 .body(userMapper.toDto(acc.getUser()));
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getUser(@PathVariable Long userId) {
+        return ResponseEntity
+                .ok(userMapper.toDto(userService.findById(userId)));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getUsers() {
+        return ResponseEntity.ok(
+                ProfilesDto.builder()
+                        .profiles(userService.findAll()
+                                .stream()
+                                .map(userMapper::toDto)
+                                .toList())
+                        .build()
+        );
     }
 
     @PatchMapping

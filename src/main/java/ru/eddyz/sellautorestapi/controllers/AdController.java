@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,6 +15,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.eddyz.sellautorestapi.dto.AdUserAds;
 import ru.eddyz.sellautorestapi.dto.CreateNewAdDto;
 import ru.eddyz.sellautorestapi.dto.EditAdDto;
 import ru.eddyz.sellautorestapi.entities.Car;
@@ -60,11 +60,16 @@ public class AdController {
                 .body(ads);
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/user/{userId}")
     public ResponseEntity<?> getAdUser(@PathVariable("userId") Long userId) {
         var user = userService.findById(userId);
         return ResponseEntity.ok(
-                adService.findByAdsByUserEmail(user.getAccount().getEmail())
+                AdUserAds.builder()
+                        .ads(adService.findByAdsByUserEmail(user.getAccount().getEmail())
+                                .stream()
+                                .map(adDetailsMapper::toDto)
+                                .toList())
+                        .build()
         );
     }
 
@@ -111,23 +116,25 @@ public class AdController {
         }
     }
 
-    @PostMapping(value = "/create", consumes = {
-            MediaType.MULTIPART_FORM_DATA_VALUE,
-    })
-    public ResponseEntity<?> createAd(@RequestPart("ad") String add,
+
+    @PostMapping("/create")
+    public ResponseEntity<?> createAd(@RequestPart("ad") CreateNewAdDto ad,
                                       BindingResult bindingResult,
-                                      @RequestPart("photos") List<MultipartFile> photos,
+                                      @RequestPart List<MultipartFile> files,
                                       @AuthenticationPrincipal UserDetails userDetails) {
 
-        CreateNewAdDto ad = convertJsonToAdDto(add);
-        try {
-            validator.validate(ad, bindingResult);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                    ResponseEntity.badRequest()
-                            .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage()))
-            );
-        }
+
+//        CreateNewAdDto ad = convertJsonToAdDto(add);
+//        try {
+//            validator.validate(ad, bindingResult);
+//        } catch (Exception e) {
+//            return ResponseEntity.badRequest().body(
+//                    ResponseEntity.badRequest()
+//                            .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage()))
+//            );
+//        }
+
+        System.out.println(ad.getTransmissionType());
 
         if (bindingResult.hasErrors()) {
             String msg = BindingResultHelper.buildFieldErrorMessage(bindingResult);
@@ -139,7 +146,7 @@ public class AdController {
         var user = userService.findByEmail(userDetails.getUsername());
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(adDetailsMapper.toDto(adService.create(ad, photos, user)));
+                .body(adDetailsMapper.toDto(adService.create(ad, files, user)));
     }
 
     @PatchMapping("/{adId}")

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.eddyz.sellautorestapi.dto.BrandsDto;
 import ru.eddyz.sellautorestapi.mapper.BrandBaseMapper;
 import ru.eddyz.sellautorestapi.service.BrandService;
 
@@ -20,10 +21,12 @@ public class BrandController {
 
     @GetMapping
     public ResponseEntity<?> getAllBrands() {
-        return ResponseEntity.ok(brandService.findAll()
-                .stream()
-                .map(brandBaseMapper::toDetailsDto)
-                .toList());
+        return ResponseEntity.ok(BrandsDto.builder()
+                .brands(brandService.findAll()
+                        .stream()
+                        .map(brandBaseMapper::toDetailsDto)
+                        .toList())
+                .build());
     }
 
     @GetMapping("/{brandId}")

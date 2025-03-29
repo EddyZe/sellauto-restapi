@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import ru.eddyz.sellautorestapi.exeptions.UnauthorizedException;
 import ru.eddyz.sellautorestapi.service.RefreshTokenService;
 
 import java.io.IOException;
@@ -73,9 +74,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
+                } else {
+                    throw new UnauthorizedException("Invalid token");
                 }
             }
-
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException e) {
             if (response != null) {

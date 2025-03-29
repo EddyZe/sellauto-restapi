@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import ru.eddyz.sellautorestapi.dto.CreateNewAdDto;
-import ru.eddyz.sellautorestapi.dto.EditAdDto;
 import ru.eddyz.sellautorestapi.entities.*;
 import ru.eddyz.sellautorestapi.exeptions.AdNotFountException;
 import ru.eddyz.sellautorestapi.exeptions.ServerException;
@@ -136,6 +135,7 @@ public class AdService {
                 .mileage(createNewAdDto.getMileage())
                 .year(createNewAdDto.getYear())
                 .vin(createNewAdDto.getVin())
+                .transmissionType(createNewAdDto.getTransmissionType())
                 .drive(createNewAdDto.getDrive())
                 .engineType(createNewAdDto.getEngineType())
                 .ad(ad)
