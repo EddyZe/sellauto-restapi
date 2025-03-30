@@ -47,6 +47,7 @@ public class AdController {
 
 
     private final AdDetailsMapper adDetailsMapper;
+    private final PriceService priceService;
 
     @GetMapping("/my")
     public ResponseEntity<?> getMyAds(@AuthenticationPrincipal UserDetails userDetails) {
@@ -157,11 +158,13 @@ public class AdController {
         }
 
         if (adDto.getPrice() != null) {
-            ad.getPrices().add(Price.builder()
+            var newPrice = Price.builder()
                     .ad(ad)
                     .price(adDto.getPrice())
                     .createdAt(LocalDateTime.now())
-                    .build());
+                    .build();
+            ad.getPrices().add(newPrice);
+            priceService.save(newPrice);
         }
 
         if (adDto.getTitle() != null)
