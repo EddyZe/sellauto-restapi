@@ -1,7 +1,6 @@
 package ru.eddyz.sellautorestapi.controllers;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +11,6 @@ import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.eddyz.sellautorestapi.dto.AdUserAds;
@@ -45,7 +43,6 @@ public class AdController {
     private final PhotoService photoService;
     private final UserService userService;
     private final ObjectMapper objectMapper;
-    private final Validator validator;
     private final AccountService accountService;
 
 
@@ -85,8 +82,11 @@ public class AdController {
                 .map(car -> adDetailsMapper.toDto(car.getAd()))
                 .toList();
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ads);
+        return ResponseEntity.ok(
+                AdUserAds.builder()
+                        .ads(ads)
+                        .build()
+        );
     }
 
     @GetMapping("{adId}")
@@ -122,20 +122,6 @@ public class AdController {
                                       BindingResult bindingResult,
                                       @RequestPart List<MultipartFile> files,
                                       @AuthenticationPrincipal UserDetails userDetails) {
-
-
-//        CreateNewAdDto ad = convertJsonToAdDto(add);
-//        try {
-//            validator.validate(ad, bindingResult);
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(
-//                    ResponseEntity.badRequest()
-//                            .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage()))
-//            );
-//        }
-
-        System.out.println(ad.getTransmissionType());
-
         if (bindingResult.hasErrors()) {
             String msg = BindingResultHelper.buildFieldErrorMessage(bindingResult);
             return ResponseEntity.badRequest().body(
@@ -170,14 +156,23 @@ public class AdController {
             throw new AdException("Insufficient rights to do this operation");
         }
 
-        ad.getPrices().add(Price.builder()
-                .ad(ad)
-                .price(adDto.getPrice())
-                .createdAt(LocalDateTime.now())
-                .build());
+        if (adDto.getPrice() != null) {
+            ad.getPrices().add(Price.builder()
+                    .ad(ad)
+                    .price(adDto.getPrice())
+                    .createdAt(LocalDateTime.now())
+                    .build());
+        }
 
-        ad.setTitle(adDto.getTitle());
-        ad.setDescription(adDto.getDescription());
+        if (adDto.getTitle() != null)
+            ad.setTitle(adDto.getTitle());
+
+        if (adDto.getDescription() != null)
+            ad.setDescription(adDto.getDescription());
+
+        if (adDto.getIsActive() != null)
+            ad.setIsActive(adDto.getIsActive());
+
         adService.save(ad);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
@@ -195,15 +190,6 @@ public class AdController {
 
         adService.deleteById(adId);
         return ResponseEntity.ok().build();
-    }
-
-    private CreateNewAdDto convertJsonToAdDto(String add) {
-
-        try {
-            return objectMapper.readValue(add, CreateNewAdDto.class);
-        } catch (JsonProcessingException e) {
-            throw new AdException("invalid JSON");
-        }
     }
 
     private boolean matcherFilter(String color, String brand, String model, String yearFrom, String yearTo, Car car) {
@@ -227,10 +213,10 @@ public class AdController {
 
     private boolean isValidYear(String yearFrom, String yearTo, Car car) {
         try {
-            if (yearFrom != null && Integer.parseInt(yearFrom) < car.getYear())
+            if (yearFrom != null && Integer.parseInt(yearFrom) > car.getYear())
                 return true;
 
-            if (yearTo != null && Integer.parseInt(yearTo) > car.getYear())
+            if (yearTo != null && Integer.parseInt(yearTo) < car.getYear())
                 return true;
         } catch (NumberFormatException e) {
             throw new AdException("Invalid year");
