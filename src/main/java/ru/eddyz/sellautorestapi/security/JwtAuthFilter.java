@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,7 +17,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ru.eddyz.sellautorestapi.exeptions.UnauthorizedException;
 import ru.eddyz.sellautorestapi.service.RefreshTokenService;
 
 import java.io.IOException;
@@ -36,13 +37,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request,
                                     @Nullable HttpServletResponse response,
-                                    @NotNull FilterChain filterChain)
+                                    @Nullable FilterChain filterChain)
             throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-        final String email;
+
+        if (filterChain == null)
+            return;
+
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            if (response != null && isNotPublishAdr(request)) {
+                response.sendError(HttpStatus.UNAUTHORIZED.value());
+                return;
+            }
+
             filterChain.doFilter(request, response);
             return;
         }
@@ -54,11 +63,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (jwtOpt.isPresent()) {
             var token = jwtOpt.get();
             if (token.isBlocked()) {
-                filterChain.doFilter(request, response);
-                return;
+                if (response != null && isNotPublishAdr(request)) {
+                    response.sendError(HttpStatus.UNAUTHORIZED.value());
+                    return;
+                }
             }
         }
 
+        validateToken(request, response, filterChain, jwt);
+    }
+
+    private void validateToken(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain, String jwt) throws IOException, ServletException {
+        final String email;
         try {
             email = jwtService.extractEmail(jwt);
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -75,14 +91,48 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
                 } else {
-                    throw new UnauthorizedException("Invalid token");
+                    if (response != null && isNotPublishAdr(request)) {
+                        response.sendError(HttpStatus.UNAUTHORIZED.value());
+                        return;
+                    }
+                }
+            } else {
+                if (response != null && isNotPublishAdr(request)) {
+                    response.sendError(HttpStatus.UNAUTHORIZED.value());
+                    return;
                 }
             }
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException e) {
-            if (response != null) {
+            if (response != null && isNotPublishAdr(request)) {
                 response.sendError(401, "Token is expired");
             }
         }
+    }
+
+    private boolean isNotPublishAdr(HttpServletRequest request) {
+        var path = request.getServletPath();
+        var method = request.getMethod();
+
+        if (path.startsWith("/api/v1/auth") || path.startsWith("/topic") || path.startsWith("/app") ||
+            path.startsWith("/ws") || method.equalsIgnoreCase(HttpMethod.OPTIONS.toString()) ||
+            path.startsWith("/error") || path.startsWith("/photos") || path.startsWith("/static") ||
+            path.startsWith("/styles") || path.startsWith("/index"))
+            return false;
+
+        if (method.equalsIgnoreCase(HttpMethod.GET.toString())) {
+            if (path.startsWith("/api/v1/ads") ||
+                path.startsWith("/api/v1/models") ||
+                path.startsWith("/api/v1/brands") ||
+                path.startsWith("/api/v1/colors"))
+                return false;
+        }
+
+        if(method.equalsIgnoreCase(HttpMethod.POST.toString())) {
+            return !path.startsWith("/api/v1/ads/filter");
+        }
+
+
+        return true;
     }
 }

@@ -58,11 +58,11 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
                         .requestMatchers(HttpMethod.GET,
-                                "/api/v1/ads/**",
-                                "/api/v1/auth/**",
-                                "/api/v1/models/**",
-                                "/api/v1/brands/**",
-                                "/api/v1/colors/**"
+                                    "/api/v1/ads/**",
+                                    "/api/v1/auth/**",
+                                    "/api/v1/models/**",
+                                    "/api/v1/brands/**",
+                                    "/api/v1/colors/**"
                         ).permitAll()
 
                         .requestMatchers(HttpMethod.POST,

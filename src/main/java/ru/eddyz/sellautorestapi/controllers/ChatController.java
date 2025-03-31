@@ -9,6 +9,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import ru.eddyz.sellautorestapi.dto.ChatsBaseDto;
 import ru.eddyz.sellautorestapi.entities.Chat;
 import ru.eddyz.sellautorestapi.exeptions.ChatException;
 import ru.eddyz.sellautorestapi.mapper.ChatBaseMapper;
@@ -65,13 +66,15 @@ public class ChatController {
     public ResponseEntity<?> getMyChats(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(
-                        userService.findByEmail(userDetails.getUsername())
-                                .getChats()
-                                .stream()
-                                .sorted((o1, o2) ->
-                                        o2.getMessages().getLast().getCreatedAt().compareTo(o1.getMessages().getLast().getCreatedAt()))
-                                .map(chatBaseMapper::toDto)
-                                .toList()
+                        ChatsBaseDto.builder()
+                                .chats(userService.findByEmail(userDetails.getUsername())
+                                        .getChats()
+                                        .stream()
+                                        .sorted((o1, o2) ->
+                                                o2.getMessages().getLast().getCreatedAt().compareTo(o1.getMessages().getLast().getCreatedAt()))
+                                        .map(chatBaseMapper::toDto)
+                                        .toList())
+                                .build()
                 );
     }
 
