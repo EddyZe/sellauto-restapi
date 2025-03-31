@@ -15,7 +15,6 @@ import ru.eddyz.sellautorestapi.mapper.ChatBaseMapper;
 import ru.eddyz.sellautorestapi.mapper.MessageMapper;
 import ru.eddyz.sellautorestapi.service.AdService;
 import ru.eddyz.sellautorestapi.service.ChatService;
-import ru.eddyz.sellautorestapi.service.MessageService;
 import ru.eddyz.sellautorestapi.service.UserService;
 
 import java.util.List;
@@ -29,7 +28,6 @@ public class ChatController {
     private final AdService adService;
     private final UserService userService;
     private final ChatBaseMapper chatBaseMapper;
-    private final MessageService messageService;
     private final MessageMapper messageMapper;
     private final SimpMessagingTemplate simpMessagingTemplate;
 
@@ -43,6 +41,14 @@ public class ChatController {
         if (userDetails.getUsername().equals(seller.getAccount().getEmail()))
             return ResponseEntity.badRequest()
                     .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "You can't write to yourself."));
+
+        for (Chat adChat : ad.getChats()) {
+            for (Chat userChats : client.getChats()) {
+                if (adChat.getChatId().equals(userChats.getChatId())) {
+                    return ResponseEntity.ok(chatBaseMapper.toDto(adChat));
+                }
+            }
+        }
 
         var chat = Chat.builder()
                 .ad(ad)

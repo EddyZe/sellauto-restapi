@@ -1,7 +1,6 @@
 package ru.eddyz.sellautorestapi.controllers;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +25,7 @@ import ru.eddyz.sellautorestapi.service.*;
 import ru.eddyz.sellautorestapi.util.BindingResultHelper;
 
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -42,7 +42,6 @@ public class AdController {
     private final CarService carService;
     private final PhotoService photoService;
     private final UserService userService;
-    private final ObjectMapper objectMapper;
     private final AccountService accountService;
 
 
@@ -106,8 +105,11 @@ public class AdController {
             if (resource.exists()) {
                 return ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        .header(HttpHeaders.CONTENT_DISPOSITION,
-                                "attachment; filename=\"" + resource.getFilename() + "\"")
+                        .headers(headers ->
+                                headers.setContentDisposition(ContentDisposition
+                                        .attachment()
+                                        .filename(resource.getFilename(), StandardCharsets.UTF_8)
+                                        .build()))
                         .body(resource);
             } else {
                 return ResponseEntity.notFound().build();
@@ -153,7 +155,7 @@ public class AdController {
         var acc = accountService.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new AccountNotFoundException("Account not found!"));
 
-        if (!ad.getUser().getAccount().getEmail().equals(userDetails.getUsername()) || acc.getRole() != Role.ROLE_ADMIN) {
+        if (!ad.getUser().getAccount().getEmail().equals(userDetails.getUsername()) && acc.getRole() != Role.ROLE_ADMIN) {
             throw new AdException("Insufficient rights to do this operation");
         }
 
@@ -187,7 +189,7 @@ public class AdController {
         var acc = accountService.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new AccountNotFoundException("Account not found!"));
 
-        if (!ad.getUser().getAccount().getEmail().equals(userDetails.getUsername()) || acc.getRole() != Role.ROLE_ADMIN) {
+        if (!ad.getUser().getAccount().getEmail().equals(userDetails.getUsername()) && acc.getRole() != Role.ROLE_ADMIN) {
             throw new AdException("Insufficient rights to do this operation");
         }
 
