@@ -7,6 +7,7 @@ import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.eddyz.sellautorestapi.entities.*;
@@ -54,6 +55,9 @@ public class CsvDataService {
 
     private static final String BACKUP_ZIP = "backup-%s.zip";
     private static final String BACKUP_DIR = "backup";
+
+    @Value("${ad.photo.directory}")
+    private static String AD_PHOTO_DIR;
 
 
     public Optional<File> exportToCsv() {
@@ -248,16 +252,11 @@ public class CsvDataService {
                 if (carRepository.findByVin(carVin).isPresent())
                     car.setCarId(carRepository.findByVin(carVin).get().getCarId());
 
-                carRepository.save(car);
-
-                savePhotoCars(photos, car);
-
                 var ad = Ad.builder()
                         .title(title)
                         .description(description)
                         .isActive(isActive)
                         .createdAt(createdAt)
-                        .car(car)
                         .user(user)
                         .build();
 
@@ -265,6 +264,12 @@ public class CsvDataService {
                     ad.setAdId(adRepository.findByCarVin(carVin).get().getAdId());
 
                 ad = adRepository.save(ad);
+
+                car.setAd(ad);
+
+                car = carRepository.save(car);
+
+                savePhotoCars(photos, car);
 
                 savePrices(prices, ad);
 
@@ -450,6 +455,8 @@ public class CsvDataService {
     private void savePhotoCars(String photos, Car car) {
         Arrays.stream(photos.split(";"))
                 .forEach(s -> {
+                    s = s.substring(AD_PHOTO_DIR.length());
+                    s = AD_PHOTO_DIR + "/" + s;
                     var phs = photoRepository.findByFilePath(s);
                     if (phs.isEmpty())
                         photoRepository.save(Photo.builder()

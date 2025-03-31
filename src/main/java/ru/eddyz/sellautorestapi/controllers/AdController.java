@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.eddyz.sellautorestapi.dto.AdUserAds;
 import ru.eddyz.sellautorestapi.dto.CreateNewAdDto;
 import ru.eddyz.sellautorestapi.dto.EditAdDto;
+import ru.eddyz.sellautorestapi.entities.Ad;
 import ru.eddyz.sellautorestapi.entities.Car;
 import ru.eddyz.sellautorestapi.entities.Price;
 import ru.eddyz.sellautorestapi.enums.Role;
@@ -151,13 +152,7 @@ public class AdController {
                     ));
         }
 
-        var ad = adService.findById(adId);
-        var acc = accountService.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new AccountNotFoundException("Account not found!"));
-
-        if (!ad.getUser().getAccount().getEmail().equals(userDetails.getUsername()) && acc.getRole() != Role.ROLE_ADMIN) {
-            throw new AdException("Insufficient rights to do this operation");
-        }
+        var ad = getAd(adId, userDetails);
 
         if (adDto.getPrice() != null) {
             var newPrice = Price.builder()
@@ -182,9 +177,7 @@ public class AdController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @DeleteMapping("/{adId}")
-    public ResponseEntity<?> deleteAd(@PathVariable Long adId,
-                                      @AuthenticationPrincipal UserDetails userDetails) {
+    private Ad getAd(Long adId, UserDetails userDetails) {
         var ad = adService.findById(adId);
         var acc = accountService.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new AccountNotFoundException("Account not found!"));
@@ -192,6 +185,13 @@ public class AdController {
         if (!ad.getUser().getAccount().getEmail().equals(userDetails.getUsername()) && acc.getRole() != Role.ROLE_ADMIN) {
             throw new AdException("Insufficient rights to do this operation");
         }
+        return ad;
+    }
+
+    @DeleteMapping("/{adId}")
+    public ResponseEntity<?> deleteAd(@PathVariable Long adId,
+                                      @AuthenticationPrincipal UserDetails userDetails) {
+        getAd(adId, userDetails);
 
         adService.deleteById(adId);
         return ResponseEntity.ok().build();
