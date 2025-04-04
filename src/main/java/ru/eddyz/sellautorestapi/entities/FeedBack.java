@@ -4,6 +4,8 @@ package ru.eddyz.sellautorestapi.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "feedback")
 @NoArgsConstructor
@@ -28,4 +30,6 @@ public class FeedBack {
     @ManyToOne
     @JoinColumn(name = "reciver_id", referencedColumnName = "user_id")
     private User receiver;
+
+    private LocalDateTime createdAt;
 }

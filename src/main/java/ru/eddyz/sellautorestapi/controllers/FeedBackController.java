@@ -1,12 +1,15 @@
 package ru.eddyz.sellautorestapi.controllers;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.eddyz.sellautorestapi.dto.NewFeedBackDto;
 import ru.eddyz.sellautorestapi.dto.UserFeedBackDto;
@@ -16,6 +19,9 @@ import ru.eddyz.sellautorestapi.exeptions.FeedBackException;
 import ru.eddyz.sellautorestapi.mapper.FeedBackMapper;
 import ru.eddyz.sellautorestapi.service.FeedBackService;
 import ru.eddyz.sellautorestapi.service.UserService;
+import ru.eddyz.sellautorestapi.util.BindingResultHelper;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @RestController
@@ -39,15 +45,29 @@ public class FeedBackController {
 
 
     @PostMapping
-    public ResponseEntity<?> sendFeedBack(@RequestBody NewFeedBackDto newFeedBackDto,
+    public ResponseEntity<?> sendFeedBack(@RequestBody @Valid NewFeedBackDto newFeedBackDto,
+                                          BindingResult bindingResult,
                                           @AuthenticationPrincipal UserDetails userDetails) {
+        if (bindingResult.hasErrors()) {
+            var resp = BindingResultHelper.buildFieldErrorMessage(bindingResult);
+            return ResponseEntity.badRequest().body(
+                    ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, resp)
+            );
+        }
+
         var sender = userService.findByEmail(userDetails.getUsername());
         var receiver = userService.findById(newFeedBackDto.getReceiverId());
+
+        if (sender.getUserId().equals(receiver.getUserId())) {
+            throw new FeedBackException("You can't send a review to yourself");
+        }
+
         var receiverFeedbacks = receiver.getReceivedFeedBacks();
         var newFeedback = FeedBack.builder()
                 .text(newFeedBackDto.getText())
                 .receiver(receiver)
                 .sender(sender)
+                .createdAt(LocalDateTime.now())
                 .estimation(newFeedBackDto.getEstimation().doubleValue())
                 .build();
         newFeedback = feedBackService.saveFeedBack(newFeedback);
@@ -55,7 +75,7 @@ public class FeedBackController {
         var newRating = receiverFeedbacks.stream()
                 .mapToDouble(FeedBack::getEstimation)
                 .average()
-                .orElse(receiver.getRating());
+                .orElse(receiver.getRating() == null ? 0 : receiver.getRating());
 
         receiver.setRating(newRating);
         userService.update(receiver);
@@ -73,13 +93,14 @@ public class FeedBackController {
         if (feedBack.getSender().getAccount().getEmail().equals(user.getAccount().getEmail()) ||
             user.getAccount().getRole() == Role.ROLE_ADMIN) {
             feedBackService.deleteById(feedBackId);
-            user.getReceivedFeedBacks().removeIf(f -> f.getId().equals(feedBackId));
-            var newRating = user.getReceivedFeedBacks()
+            feedBack.getReceiver().getReceivedFeedBacks().removeIf(f -> f.getId().equals(feedBackId));
+            var newRating = feedBack.getReceiver().getReceivedFeedBacks()
                     .stream()
                     .mapToDouble(FeedBack::getEstimation)
                     .average()
-                    .orElse(user.getRating());
-            user.setRating(newRating);
+                    .orElse(feedBack.getReceiver().getRating() ==  null ? 0 : feedBack.getReceiver().getRating());
+            feedBack.getReceiver().setRating(newRating);
+            userService.update(feedBack.getReceiver());
             return ResponseEntity.ok().build();
         }
 

@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -20,4 +22,6 @@ public class FeedBackDto {
     private UserBaseDto sender;
 
     private UserBaseDto receiver;
+
+    private LocalDateTime createdAt;
 }
