@@ -2,30 +2,25 @@ package ru.eddyz.sellautorestapi.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MessageBaseDto {
+public class ChatDetailsDto {
 
-    private Long messageId;
+    private Long chatId;
 
-    private String senderName;
+    private List<MessageBaseDto> messages;
 
-    @Column(length = 4096)
-    private String message;
+    private List<UserBaseDto> users;
 
-    private LocalDateTime createdAt;
-
+    private AdDetailsDto ad;
 }
-

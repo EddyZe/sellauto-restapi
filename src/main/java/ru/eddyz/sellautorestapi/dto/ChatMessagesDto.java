@@ -6,16 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
+import java.util.List;
+
 @NoArgsConstructor
+@AllArgsConstructor
 @Data
 @Builder
-public class UserBaseDto {
-    private Long userId;
-
-    private String firstName;
-
-    private String lastName;
-
-    private Double rating;
+public class ChatMessagesDto {
+    private List<MessageBaseDto> messages;
 }

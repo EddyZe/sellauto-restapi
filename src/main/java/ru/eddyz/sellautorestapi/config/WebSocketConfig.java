@@ -2,12 +2,10 @@ package ru.eddyz.sellautorestapi.config;
 
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
-import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -59,9 +57,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Bean
     AuthorizationManager<Message<?>> authorizationManager() {
         return new MessageMatcherDelegatingAuthorizationManager.Builder()
-                .simpTypeMatchers(SimpMessageType.CONNECT).permitAll()
-                .simpSubscribeDestMatchers("/topic/**").permitAll()
-                .simpDestMatchers("/app/**").permitAll()
+//                .simpTypeMatchers(SimpMessageType.CONNECT).permitAll()
+//                .simpSubscribeDestMatchers("/topic/**").permitAll()
+//                .simpDestMatchers("/app/**").authenticated()
                 .anyMessage().permitAll()
                 .build();
     }

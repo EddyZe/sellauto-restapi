@@ -6,16 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Data
 @Builder
-public class UserBaseDto {
-    private Long userId;
+public class NewFeedBackDto {
 
-    private String firstName;
+    private Long receiverId;
+    private Integer estimation;
+    private String text;
 
-    private String lastName;
-
-    private Double rating;
 }

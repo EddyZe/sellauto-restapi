@@ -9,10 +9,12 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import ru.eddyz.sellautorestapi.dto.ChatsBaseDto;
+import ru.eddyz.sellautorestapi.dto.ChatMessagesDto;
+import ru.eddyz.sellautorestapi.dto.ChatsDetailsDto;
 import ru.eddyz.sellautorestapi.entities.Chat;
 import ru.eddyz.sellautorestapi.exeptions.ChatException;
-import ru.eddyz.sellautorestapi.mapper.ChatBaseMapper;
+import ru.eddyz.sellautorestapi.exeptions.ChatNotFoundException;
+import ru.eddyz.sellautorestapi.mapper.ChatMapper;
 import ru.eddyz.sellautorestapi.mapper.MessageMapper;
 import ru.eddyz.sellautorestapi.service.AdService;
 import ru.eddyz.sellautorestapi.service.ChatService;
@@ -28,7 +30,7 @@ public class ChatController {
     private final ChatService chatService;
     private final AdService adService;
     private final UserService userService;
-    private final ChatBaseMapper chatBaseMapper;
+    private final ChatMapper chatMapper;
     private final MessageMapper messageMapper;
     private final SimpMessagingTemplate simpMessagingTemplate;
 
@@ -46,7 +48,7 @@ public class ChatController {
         for (Chat adChat : ad.getChats()) {
             for (Chat userChats : client.getChats()) {
                 if (adChat.getChatId().equals(userChats.getChatId())) {
-                    return ResponseEntity.ok(chatBaseMapper.toDto(adChat));
+                    return ResponseEntity.ok(chatMapper.toDto(adChat));
                 }
             }
         }
@@ -58,24 +60,36 @@ public class ChatController {
 
         chat = chatService.save(chat);
         simpMessagingTemplate.convertAndSend("/topic/user/%d/chats".formatted(seller.getUserId()),
-                chatBaseMapper.toDto(chat));
-        return ResponseEntity.status(HttpStatus.CREATED).body(chatBaseMapper.toDto(chat));
+                chatMapper.toDto(chat));
+        return ResponseEntity.status(HttpStatus.CREATED).body(chatMapper.toDto(chat));
     }
 
     @GetMapping("/my")
     public ResponseEntity<?> getMyChats(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(
-                        ChatsBaseDto.builder()
+                        ChatsDetailsDto.builder()
                                 .chats(userService.findByEmail(userDetails.getUsername())
                                         .getChats()
                                         .stream()
                                         .sorted((o1, o2) ->
                                                 o2.getMessages().getLast().getCreatedAt().compareTo(o1.getMessages().getLast().getCreatedAt()))
-                                        .map(chatBaseMapper::toDto)
+                                        .map(chatMapper::toDetailsDto)
                                         .toList())
                                 .build()
                 );
+    }
+
+    @GetMapping("/{chatId}")
+    public ResponseEntity<?> getChat(@PathVariable Long chatId, @AuthenticationPrincipal UserDetails userDetails) {
+        var user = userService.findByEmail(userDetails.getUsername());
+        var chat = user.getChats()
+                .stream()
+                .filter(c -> c.getChatId().equals(chatId))
+                .findFirst()
+                .orElseThrow(() -> new ChatNotFoundException("The chat does not exist or you are not a member of it"));
+
+        return ResponseEntity.ok(chatMapper.toDetailsDto(chat));
     }
 
     @GetMapping("/{chatId}/messages")
@@ -87,11 +101,15 @@ public class ChatController {
                 .findFirst()
                 .orElseThrow(() -> new ChatException("You are not a member of this chat"));
 
-        return ResponseEntity.ok(chat.getMessages()
-                .stream()
-                .sorted((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()))
-                .map(messageMapper::toDto)
-                .toList());
+        return ResponseEntity.ok(ChatMessagesDto
+                .builder()
+                .messages(chat.getMessages()
+                        .stream()
+                        .sorted((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()))
+                        .map(messageMapper::toDto)
+                        .toList()
+                )
+                .build());
     }
 
 

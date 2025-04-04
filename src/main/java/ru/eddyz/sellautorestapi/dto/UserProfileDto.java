@@ -22,6 +22,8 @@ public class UserProfileDto {
 
     private String lastName;
 
+    private Double rating;
+
     private AccountProfileDto account;
 
     private List<AdProfileDto> ads;

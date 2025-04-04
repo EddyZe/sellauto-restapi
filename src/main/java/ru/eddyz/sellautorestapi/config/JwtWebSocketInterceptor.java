@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -16,7 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import ru.eddyz.sellautorestapi.security.JwtService;
 
-import java.util.Objects;
+import java.util.HashMap;
 
 
 @Component
@@ -31,35 +32,50 @@ public class JwtWebSocketInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(@Nullable Message<?> message, @Nullable MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        String a = accessor.getFirstNativeHeader("Authorization");
-        System.out.println(a);
-        System.out.println(accessor.getCommand());
-        String authHeader = accessor.getFirstNativeHeader("Authorization");
-        log.info("auth header websocket: {}", authHeader);
+        log.info("All headers: {}", accessor.toNativeHeaderMap());
+        StompCommand command = accessor.getCommand();
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+        if (command == StompCommand.CONNECT ||
+            command == StompCommand.SEND ||
+            command == StompCommand.SUBSCRIBE) {
 
-            try {
-                String email = jwtService.extractEmail(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            String authHeader = accessor.getFirstNativeHeader("Authorization");
+            log.info("Auth header: {}", authHeader);
 
-                if (jwtService.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                try {
+                    String email = jwtService.extractEmail(token);
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    accessor.setUser(authentication);
+                    if (jwtService.validateToken(token, userDetails)) {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
 
-                    Objects.requireNonNull(accessor.getSessionAttributes())
-                            .put("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                        accessor.setUser(authentication);
+
+                        if (accessor.getSessionAttributes() == null) {
+                            accessor.setSessionAttributes(new HashMap<>());
+                        }
+                        accessor.getSessionAttributes().put(
+                                "SPRING_SECURITY_CONTEXT",
+                                SecurityContextHolder.getContext()
+                        );
+
+                        log.info("User authenticated: {}", userDetails.getUsername());
+                    }
+                } catch (Exception e) {
+                    log.error("Authentication error: ", e);
+                    throw new AuthenticationCredentialsNotFoundException("Invalid token", e);
                 }
-            } catch (Exception e) {
-                throw new AuthenticationCredentialsNotFoundException("Invalid JWT", e);
+            } else {
+                log.warn("Authorization header is missing or invalid");
             }
         }
         return message;

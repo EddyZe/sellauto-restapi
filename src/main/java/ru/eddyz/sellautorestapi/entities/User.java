@@ -24,6 +24,8 @@ public class User {
 
     private String lastName;
 
+    private Double rating;
+
     @OneToOne(cascade = CascadeType.REMOVE)
     @PrimaryKeyJoinColumn
     private Account account;
@@ -36,5 +38,11 @@ public class User {
 
     @OneToMany(mappedBy = "from")
     private List<Message> sendMessages;
+
+    @OneToMany(mappedBy = "sender")
+    private List<FeedBack> sendFeedBacks;
+
+    @OneToMany(mappedBy = "receiver")
+    private List<FeedBack> receivedFeedBacks;
 
 }

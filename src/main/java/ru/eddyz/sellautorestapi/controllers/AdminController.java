@@ -5,12 +5,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.eddyz.sellautorestapi.dto.*;
 import ru.eddyz.sellautorestapi.entities.Brand;
 import ru.eddyz.sellautorestapi.entities.Color;
 import ru.eddyz.sellautorestapi.entities.Model;
+import ru.eddyz.sellautorestapi.exeptions.AccountException;
+import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
 import ru.eddyz.sellautorestapi.exeptions.AdNotFountException;
 import ru.eddyz.sellautorestapi.mapper.BrandBaseMapper;
 import ru.eddyz.sellautorestapi.mapper.ColorBaseMapper;
@@ -42,9 +46,13 @@ public class AdminController {
 
 
     @PostMapping("/ban/{accountId}")
-    public ResponseEntity<?> ban(@PathVariable("accountId") Long AccountId) {
+    public ResponseEntity<?> ban(@PathVariable("accountId") Long AccountId, @AuthenticationPrincipal UserDetails userDetails) {
         var account = accountService.findById(AccountId)
-                .orElseThrow(() -> new AdNotFountException("Account not found"));
+                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+
+        if (account.getEmail().equals(userDetails.getUsername())) {
+            throw new AccountException("You can't block yourself.", "INVALID_USER");
+        }
 
         account.setBlocked(true);
         accountService.update(account);
