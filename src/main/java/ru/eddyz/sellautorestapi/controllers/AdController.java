@@ -30,7 +30,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.ArrayList;
 
 
 @Slf4j
@@ -76,12 +78,31 @@ public class AdController {
                                     @RequestParam(name = "brand", required = false) String brand,
                                     @RequestParam(name = "model", required = false) String model,
                                     @RequestParam(name = "year-from", required = false) String yearFrom,
-                                    @RequestParam(name = "year-to", required = false) String yearTo) {
-        var ads = carService.findAll()
+                                    @RequestParam(name = "year-to", required = false) String yearTo,
+                                    @RequestParam(name = "sort-year", required = false) String sortYear,
+                                    @RequestParam(name = "sort-price", required = false) String sortPrice) {
+        var ads = new ArrayList<>(carService.findAll()
                 .stream()
                 .filter(car -> matcherFilter(color, brand, model, yearFrom, yearTo, car))
                 .map(car -> adDetailsMapper.toDto(car.getAd()))
-                .toList();
+                .toList());
+
+        if (sortYear != null) {
+            if (sortYear.equalsIgnoreCase("acs")) {
+                ads.sort(Comparator.comparing(o -> o.getCar().getYear()));
+            } else {
+                ads.sort(((o1, o2) -> o2.getCar().getYear().compareTo(o1.getCar().getYear())));
+            }
+        }
+
+        if (sortPrice != null) {
+            if (sortPrice.equalsIgnoreCase("acs")) {
+                ads.sort(Comparator.comparing(o -> o.getPrices().getLast().getPrice()));
+            } else {
+                ads.sort((o1, o2) ->
+                        o2.getPrices().getLast().getPrice().compareTo(o1.getPrices().getLast().getPrice()));
+            }
+        }
 
         return ResponseEntity.ok(
                 AdUserAds.builder()
