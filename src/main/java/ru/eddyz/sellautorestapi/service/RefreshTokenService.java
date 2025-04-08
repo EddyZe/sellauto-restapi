@@ -38,19 +38,11 @@ public class RefreshTokenService {
     }
 
     public void blockedRefreshToken(String refreshToken) {
-        var token = refreshTokenRepository.findByToken(refreshToken);
-
-        if (token.isEmpty()) {
-            throw new AuthException("Token not found", "TOKEN_NOT_FOUND");
-        }
-
-        if (token.get().isBlocked()) {
-            throw new AuthException("Token blocked", "TOKEN_ALREADY_BLOCKED");
-        }
-
-        token.get().setBlocked(true);
-        refreshTokenRepository.save(token.get());
-
+        refreshTokenRepository.findByToken(refreshToken)
+                .ifPresent(t -> {
+                    t.setBlocked(true);
+                    refreshTokenRepository.save(t);
+                });
     }
 
 

@@ -25,6 +25,7 @@ public class AccountService implements UserDetailsService {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
 
     @Transactional
@@ -90,5 +91,15 @@ public class AccountService implements UserDetailsService {
         if (accountRepository.findByPhoneNumber(account.getPhoneNumber()).isPresent()) {
             throw new AccountException("Phone number is already", "ACCOUNT_ALREADY_EXISTS");
         }
+    }
+
+    @Transactional
+    public void logout(String email) {
+        accountRepository.findByEmail(email)
+                .ifPresent(account -> {
+                    account.getRefreshToken()
+                            .forEach(refreshToken ->
+                                    refreshTokenService.blockedRefreshToken(refreshToken.getToken()));
+                });
     }
 }
