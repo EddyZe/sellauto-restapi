@@ -19,6 +19,9 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
       enabled: true
+springdoc:
+  api-docs:
+    path: /v3/api-docs
 server:
   port: ${PORT:8082}
 

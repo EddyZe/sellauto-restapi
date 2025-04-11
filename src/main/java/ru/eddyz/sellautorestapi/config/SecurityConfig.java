@@ -47,7 +47,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/topic/**",
                                 "/app/**",
-                                "/ws/**"
+                                "/ws/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**"
                         ).permitAll()
 
                         .requestMatchers(
@@ -108,7 +110,6 @@ public class SecurityConfig {
                                     if (request.getSession(false) != null) {
                                         request.getSession(false).invalidate();
                                     }
-                                    ;
                                     SecurityContextHolder.clearContext();
                                     log.info("logout successful");
                                 }

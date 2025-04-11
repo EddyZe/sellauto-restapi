@@ -32,6 +32,12 @@ public class AdviceController {
                 .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage()));
     }
 
+    @ExceptionHandler(AdNotFountException.class)
+    public ResponseEntity<?> handleAdNotFountException(AdNotFountException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage()));
+    }
+
     @ExceptionHandler(AccountNotFoundException.class)
     public ResponseEntity<?> handleAccountNotFoundException(AccountNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

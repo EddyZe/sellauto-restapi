@@ -1,6 +1,7 @@
 package ru.eddyz.sellautorestapi.controllers;
 
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -30,6 +31,7 @@ import java.nio.file.Paths;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "BearerAuth")
 public class AdminController {
 
     private final AccountService accountService;

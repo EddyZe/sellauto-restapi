@@ -2,6 +2,7 @@ package ru.eddyz.sellautorestapi.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -43,15 +44,27 @@ public class CreateNewAdDto {
     private Integer mileage;
 
     @NotNull
+    @Schema(allowableValues = {"ELECTRO", "ENGINE"}, description = "Тип двигателя", example = "ELECTRO")
     private EngineType engineType;
 
     @NotNull
+    @Schema(allowableValues = {"AUTO", "MECHANIC", "ROBOT", "VARIATOR"}, description = "Тип коробки передач", example = "ROBOT")
     private TransmissionType transmissionType;
 
     @NotNull
+    @Schema(
+            allowableValues = {"SEDAN", "HATCHBACK", "UNIVERSAL", "COUPE", "PICKUP", "SUV", "MINIVAN", "OTHER"},
+            description = "Тип кузова",
+            example = "SEDAN"
+    )
     private BodyType bodyType;
 
     @NotNull
+    @Schema(
+            allowableValues = {"AWD", "FRONT", "REAR"},
+            description = "Привод",
+            example = "AWD"
+    )
     private DriveMode drive;
 
     @NotEmpty

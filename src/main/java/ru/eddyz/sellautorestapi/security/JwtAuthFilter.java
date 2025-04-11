@@ -118,7 +118,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/v1/auth") || path.startsWith("/topic") || path.startsWith("/app") ||
             path.startsWith("/ws") || method.equalsIgnoreCase(HttpMethod.OPTIONS.toString()) ||
             path.startsWith("/error") || path.startsWith("/photos") || path.startsWith("/static") ||
-            path.startsWith("/styles") || path.startsWith("/index"))
+            path.startsWith("/styles") || path.startsWith("/index") || path.startsWith("/swagger-ui") ||
+            path.startsWith("/v3/api-docs"))
             return false;
 
         if (method.equalsIgnoreCase(HttpMethod.GET.toString())) {

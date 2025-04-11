@@ -1,6 +1,12 @@
 package ru.eddyz.sellautorestapi.controllers;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.eddyz.sellautorestapi.dto.AdDetailsDto;
 import ru.eddyz.sellautorestapi.dto.AdUserAds;
 import ru.eddyz.sellautorestapi.dto.CreateNewAdDto;
 import ru.eddyz.sellautorestapi.dto.EditAdDto;
@@ -30,15 +37,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.ArrayList;
 
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/ads")
+@Tag(name = "Объявления", description = "Управление объявлениями")
 public class AdController {
 
     private final AdService adService;
@@ -52,6 +60,21 @@ public class AdController {
     private final PriceService priceService;
 
     @GetMapping("/my")
+    @Operation(
+            summary = "Получить список объявлений текущего пользователя",
+            description = "Возвращает список объявлений текущего пользователя",
+            security = @SecurityRequirement(name = "Bearer Authentication"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Успешный запрос",
+                            content = @Content(schema = @Schema(implementation = AdUserAds.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "401"
+                    )
+            }
+    )
     public ResponseEntity<?> getMyAds(@AuthenticationPrincipal UserDetails userDetails) {
         var ads = adService.findByAdsByUserEmail(userDetails.getUsername())
                 .stream()
@@ -61,6 +84,21 @@ public class AdController {
     }
 
     @GetMapping("/user/{userId}")
+    @Operation(
+            summary = "Получить список объявлений пользователя по ID",
+            description = "Возвращает список объявлений пользователя",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Успешный запрос",
+                            content = @Content(schema = @Schema(implementation = AdUserAds.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Пользователь не найден"
+                    )
+            }
+    )
     public ResponseEntity<?> getAdUser(@PathVariable("userId") Long userId) {
         var user = userService.findById(userId);
         return ResponseEntity.ok(
@@ -74,6 +112,17 @@ public class AdController {
     }
 
     @GetMapping
+    @Operation(
+            summary = "Получить список объявлений",
+            description = "Возвращает список объявлений",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Успешный запрос",
+                            content = @Content(schema = @Schema(implementation = AdUserAds.class))
+                    )
+            }
+    )
     public ResponseEntity<?> getAds(@RequestParam(name = "color", required = false) String color,
                                     @RequestParam(name = "brand", required = false) String brand,
                                     @RequestParam(name = "model", required = false) String model,
@@ -112,12 +161,42 @@ public class AdController {
     }
 
     @GetMapping("{adId}")
+    @Operation(
+            summary = "Получить объявление по ID",
+            description = "Возвращает объявление по ID",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Успешный запрос",
+                            content = @Content(schema = @Schema(implementation = AdDetailsDto.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Объявление не найдено"
+                    )
+            }
+    )
     public ResponseEntity<?> getAd(@PathVariable("adId") Long adId) {
         return ResponseEntity.ok(adDetailsMapper
                 .toDto(adService.findById(adId)));
     }
 
     @GetMapping("/getPhoto/{photoId}")
+    @Operation(
+            summary = "Получить фото объявления по ID",
+            description = "Возвращает фото по ID",
+            security = @SecurityRequirement(name = "Bearer Authentication"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Успешный запрос"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Фото не найдено"
+                    )
+            }
+    )
     public ResponseEntity<?> getPhoto(@PathVariable("photoId") Long photoId) {
         var photo = photoService.findById(photoId);
         try {
@@ -143,10 +222,37 @@ public class AdController {
 
 
     @PostMapping("/create")
-    public ResponseEntity<?> createAd(@RequestPart("ad") CreateNewAdDto ad,
+    @Operation(
+            summary = "Создает объявление для текущего пользователя",
+            description = "Создание объявления для текущего пользователя",
+            security = @SecurityRequirement(name = "Bearer Authentication"),
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Данные объявления",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = CreateNewAdDto.class))
+            )
+            ,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Успешный запрос",
+                            content = @Content(schema = @Schema(implementation = AdDetailsDto.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "401"
+                    )
+            }
+    )
+    public ResponseEntity<?> createAd(@RequestPart("ad") @Valid CreateNewAdDto ad,
                                       BindingResult bindingResult,
                                       @RequestPart List<MultipartFile> files,
                                       @AuthenticationPrincipal UserDetails userDetails) {
+
+
         if (bindingResult.hasErrors()) {
             String msg = BindingResultHelper.buildFieldErrorMessage(bindingResult);
             return ResponseEntity.badRequest().body(
@@ -161,6 +267,31 @@ public class AdController {
     }
 
     @PatchMapping("/{adId}")
+    @Operation(
+            summary = "Изменить объявление по ID",
+            description = "Изменение объявления по ID",
+            security = @SecurityRequirement(name = "Bearer Authentication"),
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Данные объявления",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = EditAdDto.class))
+            )
+            ,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Успешный запрос",
+                            content = @Content(schema = @Schema(implementation = AdDetailsDto.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "401"
+                    )
+            }
+    )
     public ResponseEntity<?> updateAd(@PathVariable Long adId,
                                       @RequestBody @Valid EditAdDto adDto,
                                       BindingResult bindingResult, @AuthenticationPrincipal UserDetails userDetails) {
@@ -210,6 +341,24 @@ public class AdController {
     }
 
     @DeleteMapping("/{adId}")
+    @Operation(
+            summary = "Удаление объявления",
+            description = "Создание объявления для текущего пользователя",
+            security = @SecurityRequirement(name = "Bearer Authentication"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Успешный запрос"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "401"
+                    )
+            }
+    )
     public ResponseEntity<?> deleteAd(@PathVariable Long adId,
                                       @AuthenticationPrincipal UserDetails userDetails) {
         getAd(adId, userDetails);
