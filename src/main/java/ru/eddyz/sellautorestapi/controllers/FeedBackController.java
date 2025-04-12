@@ -1,6 +1,12 @@
 package ru.eddyz.sellautorestapi.controllers;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import ru.eddyz.sellautorestapi.dto.FeedBackDto;
 import ru.eddyz.sellautorestapi.dto.NewFeedBackDto;
 import ru.eddyz.sellautorestapi.dto.UserFeedBackDto;
 import ru.eddyz.sellautorestapi.entities.FeedBack;
@@ -27,12 +34,30 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/v1/feedbacks")
 @RequiredArgsConstructor
+@Tag(name = "Отзывы")
 public class FeedBackController {
     private final FeedBackService feedBackService;
     private final UserService userService;
     private final FeedBackMapper feedBackMapper;
 
     @GetMapping("/{userId}")
+    @Operation(
+            summary = "Отзывы пользователя",
+            description = "Позволяет получить отзывы пользователя",
+            parameters = {
+                    @Parameter(name = "userId", description = "ID пользователя")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = UserFeedBackDto.class))
+                    ),
+                    @ApiResponse(
+                            description = "Ошибка",
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    )
+            }
+    )
     public ResponseEntity<?> userFeedBack(@PathVariable Long userId) {
         return ResponseEntity.ok(
                 UserFeedBackDto.builder()
@@ -45,6 +70,24 @@ public class FeedBackController {
 
 
     @PostMapping
+    @Operation(
+            summary = "Добавление отзыва",
+            description = "Позволяет добавить новый отзыв пользователю",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Данные нового отзыва",
+                    content = @Content(schema = @Schema(implementation = NewFeedBackDto.class))
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            content = @Content(schema = @Schema(implementation = FeedBackDto.class))
+                    ),
+                    @ApiResponse(
+                            description = "Ошибка",
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    )
+            }
+    )
     public ResponseEntity<?> sendFeedBack(@RequestBody @Valid NewFeedBackDto newFeedBackDto,
                                           BindingResult bindingResult,
                                           @AuthenticationPrincipal UserDetails userDetails) {
@@ -86,6 +129,22 @@ public class FeedBackController {
     }
 
     @DeleteMapping("/{feedBackId}")
+    @Operation(
+            summary = "Удаление отзыва",
+            description = "Позволяет удалить отзыв по его ID",
+            parameters = {
+                    @Parameter(name = "feedBackId", description = "ID отзыва")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200"
+                    ),
+                    @ApiResponse(
+                            description = "Ошибка",
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    )
+            }
+    )
     public ResponseEntity<?> deleteFeedBack(@PathVariable Long feedBackId,
                                             @AuthenticationPrincipal UserDetails userDetails) {
         var feedBack = feedBackService.findById(feedBackId);
