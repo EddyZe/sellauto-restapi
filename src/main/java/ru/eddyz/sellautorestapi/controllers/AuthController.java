@@ -1,6 +1,10 @@
 package ru.eddyz.sellautorestapi.controllers;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,6 +16,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.eddyz.sellautorestapi.dto.AuthLoginDto;
 import ru.eddyz.sellautorestapi.dto.CreateAccountDto;
+import ru.eddyz.sellautorestapi.dto.ResponseOkAuth;
+import ru.eddyz.sellautorestapi.dto.UserProfileDto;
 import ru.eddyz.sellautorestapi.entities.Account;
 import ru.eddyz.sellautorestapi.entities.RefreshToken;
 import ru.eddyz.sellautorestapi.enums.Role;
@@ -43,6 +49,24 @@ public class AuthController {
 
 
     @PostMapping("/sing-up")
+    @Operation(
+            summary = "Регистрация",
+            description = "Позволяет создать новый аккаунт",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Данные для регистрации",
+                    content = @Content(schema = @Schema(implementation = CreateAccountDto.class))
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = UserProfileDto.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    )
+            }
+    )
     public ResponseEntity<?> singUp(@RequestBody @Valid CreateAccountDto createUserDto,
                                     BindingResult bindingResult) {
 
@@ -70,6 +94,24 @@ public class AuthController {
     }
 
     @PostMapping(value = "/login")
+    @Operation(
+            summary = "Вход",
+            description = "Позволяет получить токены для входа",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Данны для входа",
+                    content = @Content(schema = @Schema(implementation = AuthLoginDto.class))
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = ResponseOkAuth.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    )
+            }
+    )
     public ResponseEntity<?> login(@RequestBody @Valid AuthLoginDto authLoginDto,
                                    BindingResult bindingResult) {
 
@@ -101,14 +143,27 @@ public class AuthController {
                 .token(refreshToken)
                 .build());
         return ResponseEntity.status(HttpStatus.OK).body(
-                Map.of(
-                        "accessToken", token,
-                        "refreshToken", refreshToken
-                )
+                ResponseOkAuth.builder()
+                        .accessToken(token)
+                        .refreshToken(refreshToken)
+                        .build()
         );
     }
 
     @PostMapping("/refresh")
+    @Operation(
+            summary = "Обновление токенов",
+            description = "Позволяет обновить токены. В заголовке Authentication должен быть refresh token.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            content = @Content(schema = @Schema(implementation = ResponseOkAuth.class))
+                    ),
+                    @ApiResponse(
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    )
+            }
+    )
     public ResponseEntity<?> refreshTokens(@RequestHeader("Authorization") String refreshTokenHeader) {
         var refreshToken = refreshTokenHeader.substring("Bearer ".length());
         var email = jwtService.extractEmail(refreshToken);
@@ -142,6 +197,9 @@ public class AuthController {
 
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(Map.of("accessToken", newAccessToken, "refreshToken", newRefreshToken));
+                .body(ResponseOkAuth.builder()
+                        .accessToken(newAccessToken)
+                        .refreshToken(newRefreshToken)
+                        .build());
     }
 }
