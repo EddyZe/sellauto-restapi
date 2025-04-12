@@ -376,6 +376,19 @@ public class AdminController {
     }
 
     @DeleteMapping("/models/{modelId}")
+    @Operation(
+            summary = "Удаление модели",
+            description = "Позволяет удалить модель у бренда, по его ID",
+            security = @SecurityRequirement(name = "Bearer Authentication"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200"
+                    ),
+                    @ApiResponse(
+                            content = @Content(schema = @Schema(implementation = ProblemDetail.class))
+                    )
+            }
+    )
     public ResponseEntity<?> deleteModel(@PathVariable Integer modelId) {
         modelService.deleteByid(modelId);
         return ResponseEntity.ok().build();
