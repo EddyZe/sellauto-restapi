@@ -14,9 +14,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import ru.eddyz.sellautorestapi.entities.RefreshToken;
 import ru.eddyz.sellautorestapi.security.JwtAuthFilter;
 import ru.eddyz.sellautorestapi.security.JwtService;
@@ -24,7 +21,6 @@ import ru.eddyz.sellautorestapi.service.AccountService;
 import ru.eddyz.sellautorestapi.service.RefreshTokenService;
 
 import java.util.Date;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -73,13 +69,15 @@ public class SecurityConfig {
                         ).permitAll()
 
                         .requestMatchers(HttpMethod.POST,
-                                "/api/v1/auth/**",
+                                "/api/v1/auth/sing-up",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/sendRecoveryCode",
+                                "/api/v1/auth/resetPassword",
                                 "/api/v1/ads/filter"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/ads/my").authenticated()
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").authenticated()
-
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // Используем hasRole вместо hasAuthority
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )
@@ -117,19 +115,5 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
-    }
-
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Stomp-Action", "Stomp-Destination"));
-        config.setExposedHeaders(List.of("Authorization"));
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
     }
 }

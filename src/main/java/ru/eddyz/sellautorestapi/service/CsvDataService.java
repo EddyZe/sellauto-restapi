@@ -355,7 +355,7 @@ public class CsvDataService {
                         ad.getCar().getMileage().toString(),
                         ad.getCar().getBodyType().name(),
                         ad.getCar().getDrive().name(),
-                        ad.getCar().getColor().getTitle(),
+                        ad.getCar().getColor() == null ? "Не указан" : ad.getCar().getColor().getTitle(),
                         ad.getCar().getBrand().getTitle(),
                         ad.getCar().getModel().getTitle(),
                         ad.getCar().getEngineType().name(),

@@ -19,6 +19,20 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
       enabled: true
+  mail:
+    host: smtp.yandex.ru
+    protocol: smtp
+    port=: 465
+    username: ${YANDEX_EMAIL_USERNAME}
+    password: ${YANDEX_EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          enable: true
+          auth: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: true
 springdoc:
   api-docs:
     path: /v3/api-docs

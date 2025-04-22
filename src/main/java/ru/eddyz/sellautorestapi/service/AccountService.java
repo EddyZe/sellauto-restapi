@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.eddyz.sellautorestapi.entities.Account;
 import ru.eddyz.sellautorestapi.enums.Role;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
+import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
 import ru.eddyz.sellautorestapi.repositories.AccountRepository;
 
 import java.util.Collections;
@@ -41,6 +42,16 @@ public class AccountService implements UserDetailsService {
                 .role(Role.ROLE_USER)
                 .blocked(false)
                 .build());
+    }
+
+    public void resetPassword(String email, String newPassword) {
+        var accOpt =  accountRepository.findByEmail(email);
+        if (accOpt.isEmpty()) {
+            throw new AccountNotFoundException("Account not found");
+        }
+        var account = accOpt.get();
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
     }
 
     public Optional<Account> findByPhoneNumber(String phoneNumber) {

@@ -45,4 +45,7 @@ public class User {
     @OneToMany(mappedBy = "receiver")
     private List<FeedBack> receivedFeedBacks;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<ForgotPasswordCode> forgotPasswordCodes;
+
 }

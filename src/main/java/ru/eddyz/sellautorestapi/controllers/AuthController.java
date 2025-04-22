@@ -15,20 +15,17 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import ru.eddyz.sellautorestapi.dto.AuthLoginDto;
-import ru.eddyz.sellautorestapi.dto.CreateAccountDto;
-import ru.eddyz.sellautorestapi.dto.ResponseOkAuth;
-import ru.eddyz.sellautorestapi.dto.UserProfileDto;
+import ru.eddyz.sellautorestapi.dto.*;
 import ru.eddyz.sellautorestapi.entities.Account;
+import ru.eddyz.sellautorestapi.entities.ForgotPasswordCode;
 import ru.eddyz.sellautorestapi.entities.RefreshToken;
 import ru.eddyz.sellautorestapi.enums.Role;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
 import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
+import ru.eddyz.sellautorestapi.exeptions.ForgotCodeException;
 import ru.eddyz.sellautorestapi.mapper.UserMapper;
 import ru.eddyz.sellautorestapi.security.JwtService;
-import ru.eddyz.sellautorestapi.service.AccountService;
-import ru.eddyz.sellautorestapi.service.RefreshTokenService;
-import ru.eddyz.sellautorestapi.service.UserService;
+import ru.eddyz.sellautorestapi.service.*;
 import ru.eddyz.sellautorestapi.util.BindingResultHelper;
 
 import java.time.Duration;
@@ -48,6 +45,8 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
+    private final ForgotPasswordCodeService forgotPasswordCodeService;
+    private final EmailService emailService;
 
 
     @PostMapping("/sing-up")
@@ -204,4 +203,40 @@ public class AuthController {
                         .refreshToken(newRefreshToken)
                         .build());
     }
+
+    @PostMapping("/sendRecoveryCode")
+    public ResponseEntity<?> sendRecoveryCode(@RequestBody RequestSendRecoveryCodeDto sendRecovery) {
+        var code = forgotPasswordCodeService.generateAndSaveCode(sendRecovery.getEmail());
+        emailService.sendEmail(
+                sendRecovery.getEmail(),
+                "Сброс пароля",
+                "Ваш код для сброса пароля: %s\n\nКод будет активен 10 минут!".formatted(code.getCode())
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/resetPassword")
+    public ResponseEntity<?> resetPassword(@RequestBody @Valid ResetPasswordDto resetPasswordDto,
+                                           BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            var msg = BindingResultHelper.buildFieldErrorMessage(bindingResult);
+            return ResponseEntity.badRequest()
+                    .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, msg));
+        }
+        ForgotPasswordCode code = forgotPasswordCodeService
+                .findCode(
+                        resetPasswordDto.getEmail(),
+                        resetPasswordDto.getCode()
+                );
+
+        if (!forgotPasswordCodeService.codeIsActive(code)) {
+            throw new ForgotCodeException("Code not active");
+        }
+
+        accountService.resetPassword(resetPasswordDto.getEmail(), resetPasswordDto.getPassword());
+        forgotPasswordCodeService.deleteById(code.getId());
+        return ResponseEntity.ok().build();
+    }
+
 }

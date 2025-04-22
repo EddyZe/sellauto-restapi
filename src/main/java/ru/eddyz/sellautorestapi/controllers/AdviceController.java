@@ -14,6 +14,19 @@ import ru.eddyz.sellautorestapi.exeptions.*;
 
 @RestControllerAdvice
 public class AdviceController {
+
+    @ExceptionHandler(ForgotCodeException.class)
+    public ResponseEntity<ProblemDetail> handleForgotCodeException(ForgotCodeException ex){
+        return ResponseEntity.badRequest()
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ForgotCodeNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleForgotCodeNotFoundException(ForgotCodeNotFoundException ex){
+        return ResponseEntity.badRequest()
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage()));
+    }
+
     @ExceptionHandler(AccountException.class)
     public ResponseEntity<?> handleAccountException(AccountException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

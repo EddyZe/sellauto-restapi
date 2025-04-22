@@ -3,6 +3,7 @@ package ru.eddyz.sellautorestapi;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.stomp.StompHeaders;
@@ -11,6 +12,7 @@ import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
+import ru.eddyz.sellautorestapi.service.EmailService;
 
 @Slf4j
 @SpringBootTest
@@ -19,7 +21,7 @@ class SellAutoRestapiApplicationTests {
     @SneakyThrows
     @Test
     void contextLoads() {
-        String url = "ws://localhost:8082/test/gs-guide-websocket";  // Замените на ваш WebSocket URL
+        String url = "ws://localhost:8082/test/gs-guide-websocket";
 
         WebSocketClient client = new StandardWebSocketClient();
 
@@ -39,7 +41,6 @@ class SellAutoRestapiApplicationTests {
             }
         });
 
-        // Don't close immediately.
         Thread.sleep(6000 * 10 * 5);
     }
 
