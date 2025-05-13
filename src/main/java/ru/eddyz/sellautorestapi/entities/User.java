@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "usr")
@@ -32,6 +33,9 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Ad> ads;
+
+    @ManyToMany(mappedBy = "favoriteUsers", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private Set<Ad> favoriteAds;
 
     @ManyToMany(mappedBy = "users")
     private List<Chat> chats;

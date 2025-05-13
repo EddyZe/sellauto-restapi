@@ -18,13 +18,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ru.eddyz.sellautorestapi.dto.AdDetailsDto;
-import ru.eddyz.sellautorestapi.dto.AdUserAds;
-import ru.eddyz.sellautorestapi.dto.CreateNewAdDto;
-import ru.eddyz.sellautorestapi.dto.EditAdDto;
+import ru.eddyz.sellautorestapi.dto.*;
 import ru.eddyz.sellautorestapi.entities.Ad;
 import ru.eddyz.sellautorestapi.entities.Car;
 import ru.eddyz.sellautorestapi.entities.Price;
+import ru.eddyz.sellautorestapi.entities.User;
 import ru.eddyz.sellautorestapi.enums.Role;
 import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
 import ru.eddyz.sellautorestapi.exeptions.AdException;
@@ -129,10 +127,18 @@ public class AdController {
                                     @RequestParam(name = "year-from", required = false) String yearFrom,
                                     @RequestParam(name = "year-to", required = false) String yearTo,
                                     @RequestParam(name = "sort-year", required = false) String sortYear,
-                                    @RequestParam(name = "sort-price", required = false) String sortPrice) {
+                                    @RequestParam(name = "sort-price", required = false) String sortPrice,
+                                    @RequestParam(name = "price-from", required = false) String priceFrom,
+                                    @RequestParam(name = "price-to", required = false) String priceTo,
+                                    @RequestParam(name = "mileage-from", required = false) String mileageFrom,
+                                    @RequestParam(name = "mileage-to", required = false) String mileageTo,
+                                    @RequestParam(name = "transmission", required = false) String transmission,
+                                    @RequestParam(name = "engine", required = false) String engine,
+                                    @RequestParam(name = "body", required = false) String body,
+                                    @RequestParam(name = "drive", required = false) String drive) {
         var ads = new ArrayList<>(carService.findAll()
                 .stream()
-                .filter(car -> matcherFilter(color, brand, model, yearFrom, yearTo, car))
+                .filter(car -> matcherFilter(color, brand, model, yearFrom, yearTo, priceFrom, priceTo, mileageFrom, mileageTo, transmission, engine, body, drive, car))
                 .map(car -> adDetailsMapper.toDto(car.getAd()))
                 .toList());
 
@@ -367,7 +373,7 @@ public class AdController {
         return ResponseEntity.ok().build();
     }
 
-    private boolean matcherFilter(String color, String brand, String model, String yearFrom, String yearTo, Car car) {
+    private boolean matcherFilter(String color, String brand, String model, String yearFrom, String yearTo, String priceFrom, String priceTo, String mileageFrom, String mileageTo, String transmission, String engine, String body, String drive, Car car) {
         if (car.getAd() == null)
             return false;
 
@@ -383,20 +389,110 @@ public class AdController {
             return false;
         }
 
+        if (isValidMileage(mileageFrom, mileageTo, car))
+            return false;
+
+        if (isValidPrice(priceFrom, priceTo, car))
+            return false;
+
+        if (transmission != null && !transmission.equalsIgnoreCase(car.getTransmissionType().toString()))
+            return false;
+
+        if (engine != null && !engine.equalsIgnoreCase(car.getEngineType().toString()))
+            return false;
+
+        if (body != null && !body.equalsIgnoreCase(car.getBodyType().toString()))
+            return false;
+
+        if (drive != null && !drive.equalsIgnoreCase(car.getDrive().toString()))
+            return false;
+
+
         return !isValidYear(yearFrom, yearTo, car);
     }
 
     private boolean isValidYear(String yearFrom, String yearTo, Car car) {
         try {
+            if (yearFrom != null && yearTo != null && Integer.parseInt(yearFrom) > car.getYear() && Integer.parseInt(yearTo) < car.getYear())
+                return true;
+
             if (yearFrom != null && Integer.parseInt(yearFrom) > car.getYear())
                 return true;
 
             if (yearTo != null && Integer.parseInt(yearTo) < car.getYear())
                 return true;
+
         } catch (NumberFormatException e) {
             throw new AdException("Invalid year");
         }
         return false;
+    }
+
+    private boolean isValidMileage(String mileageFrom, String mileageTo, Car car) {
+        try {
+            if (mileageFrom != null && mileageTo != null && Integer.parseInt(mileageFrom) > car.getMileage() && Integer.parseInt(mileageTo) < car.getMileage())
+                return true;
+
+            if (mileageFrom != null && Integer.parseInt(mileageFrom) > car.getMileage())
+                return true;
+
+            if (mileageTo != null && Integer.parseInt(mileageTo) < car.getMileage())
+                return true;
+        } catch (NumberFormatException e) {
+            throw new AdException("Invalid mileage");
+        }
+        return false;
+    }
+
+    private boolean isValidPrice(String priceFrom, String priceTo, Car car) {
+        try {
+            if (priceFrom != null && priceTo != null &&
+                Integer.parseInt(priceFrom) > car.getAd().getPrices().getLast().getPrice() &&
+                Integer.parseInt(priceTo) < car.getAd().getPrices().getLast().getPrice())
+                return true;
+
+            if (priceFrom != null && Integer.parseInt(priceFrom) > car.getAd().getPrices().getLast().getPrice())
+                return true;
+
+            if (priceTo != null && Integer.parseInt(priceTo) < car.getAd().getPrices().getLast().getPrice())
+                return true;
+        } catch (NumberFormatException e) {
+            throw new AdException("Invalid price");
+        }
+        return false;
+    }
+
+    @PostMapping("/addFavorite")
+    public ResponseEntity<?> addFavorite(@RequestBody FavoriteDto favoriteDto, @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null || userDetails.getUsername() == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        adService.addFavorite(favoriteDto.getUserId(), favoriteDto.getAdId());
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/favorites/{userId}")
+    public ResponseEntity<?> favorite(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long userId) {
+        if (userDetails == null || userDetails.getUsername() == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        var result = adService.getFavorites(userId)
+                .stream()
+                .map(adDetailsMapper::toDto)
+                .toList();
+
+        return ResponseEntity.ok().body(AdUserAds.builder()
+                .ads(result)
+                .build());
+    }
+
+    @DeleteMapping("/removeFavorite")
+    public ResponseEntity<?> removeFavorites(@RequestBody FavoriteDto favoriteDto, @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null || userDetails.getUsername() == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        adService.removeFavorite(favoriteDto.getUserId(), favoriteDto.getAdId());
+        return ResponseEntity.ok().build();
     }
 
 

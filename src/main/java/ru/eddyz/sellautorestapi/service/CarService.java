@@ -4,6 +4,7 @@ package ru.eddyz.sellautorestapi.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.eddyz.sellautorestapi.entities.Car;
 import ru.eddyz.sellautorestapi.exeptions.CarException;
 import ru.eddyz.sellautorestapi.repositories.CarRepository;
@@ -38,6 +39,7 @@ public class CarService {
         return carRepository.findByBrandTitleAndModelTitleAndColorTitle(brandTitle, modelTitle, colorTitle, Sort.by("createdAt"));
     }
 
+    @Transactional
     public List<Car> findAll() {
         return carRepository.findAll();
     }

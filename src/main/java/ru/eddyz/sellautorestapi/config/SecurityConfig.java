@@ -76,6 +76,11 @@ public class SecurityConfig {
                                 "/api/v1/ads/filter"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/ads/my").authenticated()
+                        .requestMatchers(
+                                "/api/v1/ads/addFavorite",
+                                "/api/v1/ads/removeFavorite",
+                                "/api/v1/ads/favorites/")
+                        .authenticated()
 
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 

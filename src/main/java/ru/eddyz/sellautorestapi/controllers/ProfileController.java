@@ -16,12 +16,15 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import ru.eddyz.sellautorestapi.dto.EditProfileDto;
+import ru.eddyz.sellautorestapi.dto.FavoriteDto;
 import ru.eddyz.sellautorestapi.dto.ProfilesDto;
 import ru.eddyz.sellautorestapi.dto.UserProfileDto;
+import ru.eddyz.sellautorestapi.entities.User;
 import ru.eddyz.sellautorestapi.exeptions.AccountException;
 import ru.eddyz.sellautorestapi.exeptions.AccountNotFoundException;
 import ru.eddyz.sellautorestapi.mapper.UserMapper;
 import ru.eddyz.sellautorestapi.service.AccountService;
+import ru.eddyz.sellautorestapi.service.AdService;
 import ru.eddyz.sellautorestapi.service.UserService;
 
 @RestController

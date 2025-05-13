@@ -151,4 +151,20 @@ public class AdService {
                 .user(user)
                 .build();
     }
+
+    public void addFavorite(Long userId, Long adId) {
+        if (adRepository.findById(adId).isPresent()) {
+            adRepository.addFavorite(userId, adId);
+        } else {
+            throw new AdNotFountException("Ad not found");
+        }
+    }
+
+    public void removeFavorite(Long userId, Long adId) {
+        adRepository.deleteFavorite(userId, adId);
+    }
+
+    public List<Ad> getFavorites(Long userId) {
+        return adRepository.favoriteAdByUserId(userId);
+    }
 }
