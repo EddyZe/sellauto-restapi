@@ -79,7 +79,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/ads/addFavorite",
                                 "/api/v1/ads/removeFavorite",
-                                "/api/v1/ads/favorites/")
+                                "/api/v1/ads/favorites")
                         .authenticated()
 
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
