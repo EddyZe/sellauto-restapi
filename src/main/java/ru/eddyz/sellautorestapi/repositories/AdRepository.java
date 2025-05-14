@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.eddyz.sellautorestapi.entities.Ad;
+import ru.eddyz.sellautorestapi.entities.User;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,5 +37,5 @@ public interface AdRepository extends JpaRepository<Ad, Long> {
     @Transactional
     @Modifying
     @Query(nativeQuery = true, value = "delete from favorite_ads where ad_id=:adId and user_id=:userId")
-    void deleteFavorite(@Param("adId") Long adId, @Param("userId") Long userId);
+    void deleteFavorite(@Param("userId") Long userId, @Param("adId") Long adId);
 }

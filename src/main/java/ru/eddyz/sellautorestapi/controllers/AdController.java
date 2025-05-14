@@ -447,14 +447,14 @@ public class AdController {
     private boolean isValidPrice(String priceFrom, String priceTo, Car car) {
         try {
             if (priceFrom != null && priceTo != null &&
-                Integer.parseInt(priceFrom) > car.getAd().getPrices().getLast().getPrice() &&
-                Integer.parseInt(priceTo) < car.getAd().getPrices().getLast().getPrice())
+                Double.parseDouble(priceFrom) > car.getAd().getPrices().getLast().getPrice() &&
+                Double.parseDouble(priceTo) < car.getAd().getPrices().getLast().getPrice())
                 return true;
 
-            if (priceFrom != null && Integer.parseInt(priceFrom) > car.getAd().getPrices().getLast().getPrice())
+            if (priceFrom != null && Double.parseDouble(priceFrom) > car.getAd().getPrices().getLast().getPrice())
                 return true;
 
-            if (priceTo != null && Integer.parseInt(priceTo) < car.getAd().getPrices().getLast().getPrice())
+            if (priceTo != null && Double.parseDouble(priceTo) < car.getAd().getPrices().getLast().getPrice())
                 return true;
         } catch (NumberFormatException e) {
             throw new AdException("Invalid price");
@@ -472,7 +472,7 @@ public class AdController {
     }
 
     @GetMapping("/favorites/{userId}")
-    public ResponseEntity<?> favorite(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long userId) {
+    public ResponseEntity<?> favorite(@AuthenticationPrincipal UserDetails userDetails, @PathVariable("userId") Long userId) {
         if (userDetails == null || userDetails.getUsername() == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
@@ -486,7 +486,7 @@ public class AdController {
                 .build());
     }
 
-    @DeleteMapping("/removeFavorite")
+    @PostMapping("/removeFavorite")
     public ResponseEntity<?> removeFavorites(@RequestBody FavoriteDto favoriteDto, @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null || userDetails.getUsername() == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
